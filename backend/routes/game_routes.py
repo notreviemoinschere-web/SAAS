@@ -90,6 +90,37 @@ async def play_game(slug: str, req: PlayRequest, request: Request):
     tenant_id = campaign['tenant_id']
     campaign_id = campaign['id']
     is_test = campaign['status'] == 'test'
+    
+    # Get IP address
+    ip_address = request.client.host if request.client else 'unknown'
+    
+    # SERVER-SIDE BAN ENFORCEMENT (non-test only)
+    if not is_test:
+        # Check IP ban
+        banned_ip = await db.banned_ips.find_one({'value': ip_address})
+        if banned_ip:
+            # Check if ban has expired
+            if banned_ip.get('expires_at'):
+                if datetime.fromisoformat(banned_ip['expires_at']) > datetime.now(timezone.utc):
+                    raise HTTPException(403, 'Access denied')
+            else:
+                raise HTTPException(403, 'Access denied')
+        
+        # Check device ban
+        if req.device_hash:
+            banned_device = await db.banned_devices.find_one({'value': req.device_hash})
+            if banned_device:
+                if banned_device.get('expires_at'):
+                    if datetime.fromisoformat(banned_device['expires_at']) > datetime.now(timezone.utc):
+                        raise HTTPException(403, 'Access denied from this device')
+                else:
+                    raise HTTPException(403, 'Access denied from this device')
+        
+        # Check email/phone hash blacklist
+        email_hash_check = hash_identifier(req.email)
+        blacklisted = await db.blacklisted_identities.find_one({'value': email_hash_check})
+        if blacklisted:
+            raise HTTPException(403, 'Access denied')
 
     # Check plan play limits for non-test plays
     if not is_test:
