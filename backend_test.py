@@ -252,7 +252,7 @@ class PrizeWheelAPITester:
         
         # Test plans (public endpoint)
         status, data = self.make_request('GET', '/billing/plans')
-        success = status == 200 and isinstance(data, list)
+        success = status == 200 and 'plans' in data and isinstance(data['plans'], dict)
         self.log_result("GET /billing/plans", success, data)
 
     def test_cookie_consent(self):
