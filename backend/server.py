@@ -16,6 +16,7 @@ from auth import hash_password
 # Import routers
 from routes.auth_routes import router as auth_router
 from routes.admin_routes import router as admin_router
+from routes.admin_extended_routes import router as admin_extended_router
 from routes.tenant_routes import router as tenant_router
 from routes.game_routes import router as game_router
 from routes.billing_routes import router as billing_router
