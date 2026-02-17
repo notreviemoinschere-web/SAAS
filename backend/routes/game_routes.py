@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 import logging
+import hashlib
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/game", tags=["game"])
