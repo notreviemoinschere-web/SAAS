@@ -19,6 +19,7 @@ export default function VerifyEmail() {
     if (t) {
       verifyToken(t);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const verifyToken = async (t) => {
