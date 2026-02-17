@@ -27,7 +27,7 @@ export default function Login() {
       else if (data.user.role === "tenant_staff") navigate("/dashboard/redeem");
       else navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || "Login failed");
+      setError(err.response?.data?.detail || "Login failed. Please check your email and password.");
     } finally {
       setLoading(false);
     }
