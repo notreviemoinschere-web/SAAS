@@ -115,7 +115,10 @@ async def startup():
                 'staff': 0,
                 'export': False,
                 'branding_removable': False
-            }
+            },
+            'features': [],
+            'is_active': True,
+            'sort_order': 0
         },
         {
             'id': 'pro',
@@ -128,7 +131,10 @@ async def startup():
                 'staff': 5,
                 'export': True,
                 'branding_removable': True
-            }
+            },
+            'features': ['Unlimited campaigns', 'Export data', 'Remove branding'],
+            'is_active': True,
+            'sort_order': 1
         },
         {
             'id': 'business',
@@ -145,7 +151,10 @@ async def startup():
                 'webhooks': True,
                 'api_access': True,
                 'white_label': True
-            }
+            },
+            'features': ['Everything in Pro', 'Unlimited plays', 'API access', 'White label'],
+            'is_active': True,
+            'sort_order': 2
         }
     ]
 
