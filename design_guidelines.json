@@ -1,0 +1,155 @@
+{
+  "identity": {
+    "name": "E1",
+    "mission": "Create a clean, modern SaaS gamification platform that balances professional utility with playful player engagement.",
+    "core_values": [
+      "Clarity over Decoration",
+      "Mobile-First Interaction",
+      "Functional Beauty",
+      "Trust through Consistency"
+    ]
+  },
+  "typography": {
+    "headings": {
+      "family": "Plus Jakarta Sans, sans-serif",
+      "weights": [600, 700],
+      "usage": "All dashboard headings, landing page titles, and major component headers."
+    },
+    "body": {
+      "family": "Inter, sans-serif",
+      "weights": [400, 500],
+      "usage": "General text, form inputs, table data, and descriptions."
+    },
+    "display": {
+      "family": "Bebas Neue, sans-serif",
+      "weights": [400],
+      "usage": "Wheel segments, prize titles, and 'Spin to Win' call-to-actions."
+    },
+    "mono": {
+      "family": "JetBrains Mono, monospace",
+      "weights": [400],
+      "usage": "API keys, redeem codes, and audit logs."
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "default": "#4F46E5",
+        "foreground": "#FFFFFF",
+        "hover": "#4338CA",
+        "description": "Electric Indigo. Used for primary actions, active states, and brand identity."
+      },
+      "secondary": {
+        "default": "#10B981",
+        "foreground": "#FFFFFF",
+        "hover": "#059669",
+        "description": "Vibrant Emerald. Used for 'Win' states, success messages, and positive trends."
+      },
+      "background": {
+        "app": "#F8FAFC",
+        "card": "#FFFFFF",
+        "overlay": "rgba(255, 255, 255, 0.8)"
+      },
+      "foreground": {
+        "default": "#0F172A",
+        "muted": "#64748B"
+      },
+      "accent": {
+        "default": "#F3E8FF",
+        "foreground": "#6B21A8",
+        "description": "Pale Violet. Used for gamification highlights and subtle decorative elements."
+      },
+      "destructive": {
+        "default": "#EF4444",
+        "foreground": "#FFFFFF"
+      }
+    },
+    "gradients": {
+      "wheel_spin": "conic-gradient(from 0deg, #4F46E5, #818CF8, #C7D2FE, #4F46E5)",
+      "gold_tier": "linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)"
+    }
+  },
+  "layout_strategies": {
+    "dashboard": {
+      "structure": "Sidebar + Top Header + Main Content Area",
+      "grid_mode": "Mode B (High Density)",
+      "spacing": "Relaxed (p-6 to p-8 internally)",
+      "rules": [
+        "Sidebar must be collapsible on mobile.",
+        "Top header contains breadcrumbs and user profile only.",
+        "Main content uses a max-width container (max-w-7xl) centered.",
+        "Cards use 'rounded-xl' and 'shadow-sm' (no heavy shadows)."
+      ]
+    },
+    "player_interface": {
+      "structure": "Full-screen Viewport",
+      "grid_mode": "Mode A (Focus)",
+      "alignment": "Center-aligned content, bottom-aligned controls.",
+      "rules": [
+        "Wheel must be perfectly centered vertically and horizontally on mobile.",
+        "Controls (Spin Button) must be in the 'Thumb Zone' (bottom 30% of screen).",
+        "Result modals must be bottom sheets on mobile, dialogs on desktop."
+      ]
+    }
+  },
+  "components": {
+    "wheel_of_fortune": {
+      "type": "Custom React Component",
+      "rendering": "SVG or Canvas (preferred for performance)",
+      "interaction": "Tap to Spin",
+      "animation": "Physics-based deceleration (ease-out-cubic).",
+      "styling": "Segments alternate between Primary and Accent colors. Text is perpendicular to center."
+    },
+    "stats_card": {
+      "path": "/app/frontend/src/components/ui/card.tsx",
+      "customization": "Remove default border if using 'bg-card'. Add 'trend' indicator (green up arrow, red down arrow)."
+    },
+    "data_table": {
+      "path": "/app/frontend/src/components/ui/table.tsx",
+      "customization": "Header background 'bg-muted/50'. Row hover 'hover:bg-muted/50'."
+    }
+  },
+  "assets": {
+    "images": {
+      "tenant_hero": {
+        "url": "https://images.unsplash.com/photo-1764761222629-64a7019f29c3",
+        "alt": "Business owner managing shop",
+        "usage": "B2B Landing Page Hero Background"
+      },
+      "player_excited": {
+        "url": "https://images.unsplash.com/photo-1586081600345-cb6b0a4454b9",
+        "alt": "Excited player winning",
+        "usage": "Player interface success state or landing page social proof"
+      },
+      "confetti_overlay": {
+        "url": "https://images.unsplash.com/photo-1761505976134-e7d71f8747b9",
+        "alt": "Confetti celebration",
+        "usage": "Overlay on 'Big Win' modal"
+      }
+    }
+  },
+  "universal_guidelines": {
+    "accessibility": [
+      "Ensure 4.5:1 contrast ratio for all text.",
+      "Wheel segments must have distinct borders or contrasting colors for colorblindness.",
+      "All interactive elements must be focusable via keyboard."
+    ],
+    "motion": [
+      "Disable heavy animations if 'prefers-reduced-motion' is set.",
+      "Wheel spin duration: 3-5 seconds.",
+      "Confetti duration: 3 seconds."
+    ],
+    "spacing": [
+      "Use 'gap-6' for dashboard grids.",
+      "Use 'py-12' for landing page sections.",
+      "Mobile padding: 'p-4' minimum."
+    ],
+    "instructions_to_main_agent": [
+      "Use 'lucide-react' for all icons.",
+      "Implement the 'Wheel' component using pure React state and CSS transforms or a lightweight library if necessary, but avoid heavy game engines.",
+      "Strictly follow the color palette. Do not introduce new colors without reason.",
+      "For the 'Consent Registry', use a clean, non-intrusive bottom banner.",
+      "Ensure all 'data-testid' attributes are present for testing."
+    ]
+  }
+}
