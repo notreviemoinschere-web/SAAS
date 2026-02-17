@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useI18n } from "../lib/i18n";
 import { useAuth } from "../lib/auth";
@@ -6,18 +6,19 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
-import { Gift, Globe, CheckCircle2 } from "lucide-react";
+import { Gift, Globe, CheckCircle2, Loader2 } from "lucide-react";
+import api from "../lib/api";
 
 export default function Signup() {
   const { t, lang, switchLang } = useI18n();
-  const { signup } = useAuth();
+  const { signup, login } = useAuth();
   const navigate = useNavigate();
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(null);
+  const [step, setStep] = useState("form"); // form, verifying, done
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,34 +26,52 @@ export default function Signup() {
     setLoading(true);
     try {
       const data = await signup(businessName, email, password);
-      setSuccess(data);
+      setStep("verifying");
+      
+      // Auto-verify email
+      try {
+        await api.post("/auth/verify-email", { token: data.verification_token });
+      } catch {}
+      
+      // Auto-login
+      try {
+        await login(email, password);
+        setStep("done");
+        setTimeout(() => navigate("/dashboard"), 500);
+      } catch {
+        // If auto-login fails, redirect to login page
+        navigate("/login");
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || "Signup failed");
+      setError(err.response?.data?.detail || "Signup failed. Please try again.");
+      setStep("form");
     } finally {
       setLoading(false);
     }
   };
 
-  if (success) {
+  if (step === "verifying") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4" data-testid="signup-verifying">
+        <Card className="w-full max-w-md shadow-lg text-center">
+          <CardContent className="pt-8 pb-6">
+            <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+            <h2 className="text-xl font-bold mb-2">Setting up your account...</h2>
+            <p className="text-muted-foreground">Please wait while we create your space.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === "done") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4" data-testid="signup-success">
         <Card className="w-full max-w-md shadow-lg text-center">
           <CardContent className="pt-8 pb-6">
             <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Account Created!</h2>
-            <p className="text-muted-foreground mb-6">Please verify your email to continue. Check your inbox for the verification link.</p>
-            <div className="bg-muted rounded-lg p-4 mb-6">
-              <p className="text-xs text-muted-foreground mb-1">Verification Token (for testing):</p>
-              <code data-testid="verification-token" className="text-sm font-mono break-all">{success.verification_token}</code>
-            </div>
-            <div className="flex gap-3">
-              <Button data-testid="goto-verify" onClick={() => navigate(`/verify-email?token=${success.verification_token}`)} className="flex-1 rounded-full">
-                Verify Email
-              </Button>
-              <Button data-testid="goto-login-from-signup" variant="outline" onClick={() => navigate("/login")} className="flex-1 rounded-full">
-                {t("nav.login")}
-              </Button>
-            </div>
+            <h2 className="text-2xl font-bold mb-2">Welcome!</h2>
+            <p className="text-muted-foreground mb-4">Your account is ready. Redirecting to dashboard...</p>
           </CardContent>
         </Card>
       </div>
