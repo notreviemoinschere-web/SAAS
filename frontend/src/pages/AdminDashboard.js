@@ -818,12 +818,12 @@ export default function AdminDashboard() {
             {/* AUDIT TAB */}
             <TabsContent value="audit">
               <div className="flex flex-wrap items-center gap-2 mb-4">
-                <Select value={auditLogFilters.category} onValueChange={(v) => setAuditLogFilters({...auditLogFilters, category: v})}>
+                <Select value={auditLogFilters.category || "all"} onValueChange={(v) => setAuditLogFilters({...auditLogFilters, category: v === "all" ? "" : v})}>
                   <SelectTrigger className="w-40" data-testid="audit-filter-category">
                     <SelectValue placeholder="Catégorie" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Toutes</SelectItem>
+                    <SelectItem value="all">Toutes</SelectItem>
                     {auditFilters.categories.map(c => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
