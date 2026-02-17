@@ -65,6 +65,20 @@ async def startup():
     await db.reward_codes.create_index("code", unique=True)
     await db.players.create_index([("campaign_id", 1), ("email_hash", 1)])
     await db.payment_transactions.create_index("session_id")
+    
+    # New indexes for admin features
+    await db.plans.create_index("id", unique=True)
+    await db.platform_settings.create_index("setting_type", unique=True)
+    await db.admin_messages.create_index("id", unique=True)
+    await db.admin_messages.create_index("created_at")
+    await db.tenant_message_reads.create_index([("tenant_id", 1), ("message_id", 1)], unique=True)
+    await db.tenant_notes.create_index([("tenant_id", 1), ("created_at", -1)])
+    await db.banned_ips.create_index("value", unique=True)
+    await db.banned_devices.create_index("value", unique=True)
+    await db.blacklisted_identities.create_index("value", unique=True)
+    await db.audit_logs.create_index([("tenant_id", 1), ("created_at", -1)])
+    await db.audit_logs.create_index("category")
+    await db.consents.create_index([("player_id", 1), ("consent_type", 1)])
 
     # Seed super admin
     admin_email = os.environ.get('SUPER_ADMIN_EMAIL', 'admin@prizewheelpro.com')
