@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useI18n } from "../lib/i18n";
 import { WheelOfFortune } from "../components/WheelOfFortune";
@@ -19,13 +19,13 @@ export default function PlayGame() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [consent, setConsent] = useState(false);
-  const [phase, setPhase] = useState("loading"); // loading, form, spinning, result
+  const [phase, setPhase] = useState("loading");
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     const load = async () => {
       try {
         const res = await api.get(`/game/${slug}?lang=${lang}`);
