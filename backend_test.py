@@ -233,7 +233,7 @@ class PrizeWheelAPITester:
         
         # Test dashboard
         status, data = self.make_request('GET', '/tenant/dashboard', token=self.tenant_token)
-        success = status == 200 and 'campaigns' in data
+        success = status == 200 and 'total_campaigns' in data
         self.log_result("GET /tenant/dashboard", success, data)
         
         # Test campaigns list
