@@ -151,7 +151,14 @@ export default function PlayGame() {
                 <Input data-testid="game-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+44 ..." />
               </div>
               <div className="flex items-start gap-2">
-                <Checkbox data-testid="game-consent" checked={consent} onCheckedChange={setConsent} id="consent" />
+                <input
+                  data-testid="game-consent"
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  id="consent"
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary accent-[hsl(243,75%,59%)]"
+                />
                 <Label htmlFor="consent" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
                   {t("game.accept_terms")}
                   {campaign?.legal_text && (
