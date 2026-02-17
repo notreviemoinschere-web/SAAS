@@ -354,22 +354,22 @@ export default function AdminDashboard() {
                     onChange={(e) => setTenantFilters({...tenantFilters, search: e.target.value})} 
                     className="w-48"
                   />
-                  <Select value={tenantFilters.status} onValueChange={(v) => setTenantFilters({...tenantFilters, status: v})}>
+                  <Select value={tenantFilters.status || "all"} onValueChange={(v) => setTenantFilters({...tenantFilters, status: v === "all" ? "" : v})}>
                     <SelectTrigger className="w-32" data-testid="filter-status">
                       <SelectValue placeholder="Statut" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Tous</SelectItem>
+                      <SelectItem value="all">Tous</SelectItem>
                       <SelectItem value="active">Actif</SelectItem>
                       <SelectItem value="suspended">Suspendu</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Select value={tenantFilters.plan} onValueChange={(v) => setTenantFilters({...tenantFilters, plan: v})}>
+                  <Select value={tenantFilters.plan || "all"} onValueChange={(v) => setTenantFilters({...tenantFilters, plan: v === "all" ? "" : v})}>
                     <SelectTrigger className="w-32" data-testid="filter-plan">
                       <SelectValue placeholder="Plan" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Tous</SelectItem>
+                      <SelectItem value="all">Tous</SelectItem>
                       <SelectItem value="free">Free</SelectItem>
                       <SelectItem value="pro">Pro</SelectItem>
                       <SelectItem value="business">Business</SelectItem>
