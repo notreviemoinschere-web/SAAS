@@ -26,6 +26,7 @@ app = FastAPI(title="PrizeWheel Pro API")
 # Include all routers
 app.include_router(auth_router)
 app.include_router(admin_router)
+app.include_router(admin_extended_router)
 app.include_router(tenant_router)
 app.include_router(game_router)
 app.include_router(billing_router)
