@@ -4,7 +4,6 @@ import { useI18n } from "../lib/i18n";
 import { WheelOfFortune } from "../components/WheelOfFortune";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Checkbox } from "../components/ui/checkbox";
 import { Label } from "../components/ui/label";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
