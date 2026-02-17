@@ -39,6 +39,7 @@ function AppRoutes() {
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute roles={["super_admin"]}><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/tenants/:tenantId" element={<ProtectedRoute roles={["super_admin"]}><TenantDetail /></ProtectedRoute>} />
 
       {/* Tenant */}
       <Route path="/dashboard" element={<ProtectedRoute roles={["tenant_owner", "tenant_staff", "super_admin"]}><TenantDashboard /></ProtectedRoute>} />
