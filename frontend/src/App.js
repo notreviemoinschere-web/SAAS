@@ -10,6 +10,7 @@ import VerifyEmail from "@/pages/VerifyEmail";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import AdminDashboard from "@/pages/AdminDashboard";
+import TenantDetail from "@/pages/TenantDetail";
 import TenantDashboard from "@/pages/TenantDashboard";
 import CampaignEditor from "@/pages/CampaignEditor";
 import PlayGame from "@/pages/PlayGame";
