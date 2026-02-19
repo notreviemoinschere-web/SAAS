@@ -1,9 +1,32 @@
 import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+function resolveBackendBaseUrl() {
+  const envUrl = process.env.REACT_APP_BACKEND_URL?.trim();
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, "");
+  }
+
+  if (typeof window !== "undefined") {
+    const runtimeUrl = window.__APP_CONFIG__?.BACKEND_URL?.trim();
+    if (runtimeUrl) {
+      return runtimeUrl.replace(/\/+$/, "");
+    }
+
+    const { protocol, hostname, origin } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:8001";
+    }
+
+    return origin;
+  }
+
+  return "http://localhost:8001";
+}
+
+const BACKEND_BASE_URL = resolveBackendBaseUrl();
 
 const api = axios.create({
-  baseURL: `${BACKEND_URL}/api`,
+  baseURL: `${BACKEND_BASE_URL}/api`,
   headers: { "Content-Type": "application/json" },
 });
 
