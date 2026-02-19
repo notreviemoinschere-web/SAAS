@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useI18n } from "../lib/i18n";
 import { useAuth } from "../lib/auth";
+import api, { BACKEND_BASE_URL } from "../lib/api";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -16,6 +17,26 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [apiStatus, setApiStatus] = useState({ checking: true, ok: false, message: "" });
+
+  useEffect(() => {
+    let mounted = true;
+    const checkApi = async () => {
+      try {
+        await api.get("/health");
+        if (mounted) setApiStatus({ checking: false, ok: true, message: "API connectée" });
+      } catch (err) {
+        if (mounted) {
+          const detail = err.response?.data?.detail || err.message || "API inaccessible";
+          setApiStatus({ checking: false, ok: false, message: detail });
+        }
+      }
+    };
+    checkApi();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,6 +72,11 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className={`text-xs p-2 rounded-lg border ${apiStatus.ok ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-amber-50 border-amber-200 text-amber-700"}`}>
+              {apiStatus.checking ? "Vérification connexion API..." : apiStatus.ok ? "Connexion API OK" : "Connexion API KO"}
+              <div className="mt-1 break-all font-mono">{BACKEND_BASE_URL}/api</div>
+              {!apiStatus.ok && !apiStatus.checking && <div className="mt-1">Détail: {apiStatus.message}</div>}
+            </div>
             {error && (
               <div data-testid="login-error" className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg">
                 {error}

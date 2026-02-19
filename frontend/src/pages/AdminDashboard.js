@@ -18,7 +18,7 @@ import { Switch } from "../components/ui/switch";
 import { 
   Users, Gamepad2, Play, DollarSign, ShieldAlert, Plus, Ban, CheckCircle2,
   Settings, CreditCard, MessageSquare, FileText, Search, Eye, Trash2, Edit,
-  AlertTriangle, Info, Bell, Filter, RefreshCw, Shield
+  AlertTriangle, Info, Bell, Filter, RefreshCw, Shield, Copy
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -33,6 +33,10 @@ export default function AdminDashboard() {
   const [auditFilters, setAuditFilters] = useState({ categories: [], actions: [] });
   const [fraudFlags, setFraudFlags] = useState([]);
   const [bans, setBans] = useState({ banned_ips: [], banned_devices: [], blacklisted_identities: [] });
+  const [games, setGames] = useState([]);
+  const [gamesTotal, setGamesTotal] = useState(0);
+  const [selectedGameId, setSelectedGameId] = useState("");
+  const [gamePrizes, setGamePrizes] = useState([]);
   const [plans, setPlans] = useState([]);
   const [messages, setMessages] = useState([]);
   const [billingSettings, setBillingSettings] = useState(null);
@@ -44,11 +48,14 @@ export default function AdminDashboard() {
   const [showBillingSettings, setShowBillingSettings] = useState(false);
   const [showCreateMessage, setShowCreateMessage] = useState(false);
   const [showCreateBan, setShowCreateBan] = useState(false);
+  const [showCreateGame, setShowCreateGame] = useState(false);
+  const [showCreatePrize, setShowCreatePrize] = useState(false);
   
   // Filters
   const [tenantFilters, setTenantFilters] = useState({ search: "", status: "", plan: "" });
   const [auditLogFilters, setAuditLogFilters] = useState({ category: "", action: "", tenant_id: "" });
   const [fraudFilter, setFraudFilter] = useState({ type: "" });
+  const [gameFilters, setGameFilters] = useState({ search: "", status: "", tenant_id: "" });
   
   // Form states
   const [tenantForm, setTenantForm] = useState({ business_name: "", email: "", password: "" });
@@ -65,6 +72,8 @@ export default function AdminDashboard() {
     title: "", content: "", message_type: "info", target_type: "broadcast", target_tenant_ids: []
   });
   const [banForm, setBanForm] = useState({ ban_type: "ip", value: "", reason: "" });
+  const [gameForm, setGameForm] = useState({ tenant_id: "", title: "", description: "", start_date: "", end_date: "" });
+  const [prizeForm, setPrizeForm] = useState({ label: "", weight: 1, stock: 10, value: "", color: "#3b82f6" });
 
   // Fetch functions
   const fetchStats = useCallback(async () => {
@@ -89,6 +98,30 @@ export default function AdminDashboard() {
       console.error(err);
     }
   }, [tenantFilters]);
+
+  const fetchGames = useCallback(async () => {
+    try {
+      const params = {};
+      if (gameFilters.search) params.search = gameFilters.search;
+      if (gameFilters.status) params.status = gameFilters.status;
+      if (gameFilters.tenant_id) params.tenant_id = gameFilters.tenant_id;
+      const res = await api.get("/admin/games", { params });
+      setGames(res.data.games);
+      setGamesTotal(res.data.total);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [gameFilters]);
+
+  const fetchGamePrizes = useCallback(async (gameId) => {
+    if (!gameId) return;
+    try {
+      const res = await api.get(`/admin/games/${gameId}/prizes`);
+      setGamePrizes(res.data.prizes || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
 
   const fetchPlans = useCallback(async () => {
     try {
@@ -277,6 +310,73 @@ export default function AdminDashboard() {
     }
   };
 
+  const createGame = async () => {
+    try {
+      await api.post("/admin/games", gameForm);
+      setShowCreateGame(false);
+      setGameForm({ tenant_id: "", title: "", description: "", start_date: "", end_date: "" });
+      fetchGames();
+      fetchStats();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Erreur");
+    }
+  };
+
+  const changeGameStatus = async (gameId, status) => {
+    try {
+      await api.put(`/admin/games/${gameId}/status`, { status });
+      fetchGames();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const duplicateGame = async (game) => {
+    try {
+      await api.post(`/admin/games/${game.id}/duplicate`, { title: `${game.title} (Copie)` });
+      fetchGames();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Erreur");
+    }
+  };
+
+  const deleteGame = async (gameId) => {
+    if (!window.confirm("Supprimer ce jeu ?")) return;
+    try {
+      await api.delete(`/admin/games/${gameId}`);
+      if (selectedGameId === gameId) {
+        setSelectedGameId("");
+        setGamePrizes([]);
+      }
+      fetchGames();
+      fetchStats();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Erreur");
+    }
+  };
+
+  const addPrizeToGame = async () => {
+    if (!selectedGameId) return;
+    try {
+      await api.post(`/admin/games/${selectedGameId}/prizes`, prizeForm);
+      setShowCreatePrize(false);
+      setPrizeForm({ label: "", weight: 1, stock: 10, value: "", color: "#3b82f6" });
+      fetchGamePrizes(selectedGameId);
+      fetchGames();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Erreur");
+    }
+  };
+
+  const deletePrize = async (prizeId) => {
+    try {
+      await api.delete(`/admin/game-prizes/${prizeId}`);
+      fetchGamePrizes(selectedGameId);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const statCards = stats ? [
     { label: t("admin.total_tenants"), value: stats.total_tenants, icon: Users, color: "text-primary" },
     { label: t("admin.active_campaigns"), value: stats.active_campaigns, icon: Gamepad2, color: "text-green-500" },
@@ -304,6 +404,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="overview" data-testid="admin-tab-overview">Overview</TabsTrigger>
               <TabsTrigger value="tenants" data-testid="admin-tab-tenants">{t("nav.tenants")}</TabsTrigger>
               <TabsTrigger value="plans" data-testid="admin-tab-plans">Plans & Stripe</TabsTrigger>
+              <TabsTrigger value="games" data-testid="admin-tab-games">Jeux</TabsTrigger>
               <TabsTrigger value="messages" data-testid="admin-tab-messages">Messages</TabsTrigger>
               <TabsTrigger value="audit" data-testid="admin-tab-audit">{t("nav.audit")}</TabsTrigger>
               <TabsTrigger value="fraud" data-testid="admin-tab-fraud">{t("nav.fraud")}</TabsTrigger>
@@ -719,6 +820,103 @@ export default function AdminDashboard() {
                 </DialogContent>
               </Dialog>
             </TabsContent>
+
+            {/* GAMES TAB */}
+            <TabsContent value="games">
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <Input
+                  placeholder="Rechercher un jeu..."
+                  value={gameFilters.search}
+                  onChange={(e) => setGameFilters({...gameFilters, search: e.target.value})}
+                  className="w-48"
+                />
+                <Select value={gameFilters.status || "all"} onValueChange={(v) => setGameFilters({...gameFilters, status: v === "all" ? "" : v})}>
+                  <SelectTrigger className="w-36"><SelectValue placeholder="Statut" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="test">Test</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="paused">Paused</SelectItem>
+                    <SelectItem value="ended">Ended</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm" onClick={fetchGames}><RefreshCw className="w-4 h-4" /></Button>
+                <Dialog open={showCreateGame} onOpenChange={setShowCreateGame}>
+                  <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" />Créer un jeu</Button></DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader><DialogTitle>Nouveau jeu pour un tenant</DialogTitle></DialogHeader>
+                    <div className="space-y-3">
+                      <Input placeholder="Tenant ID" value={gameForm.tenant_id} onChange={(e) => setGameForm({...gameForm, tenant_id: e.target.value})} />
+                      <Input placeholder="Titre" value={gameForm.title} onChange={(e) => setGameForm({...gameForm, title: e.target.value})} />
+                      <Textarea placeholder="Description" value={gameForm.description} onChange={(e) => setGameForm({...gameForm, description: e.target.value})} />
+                    </div>
+                    <DialogFooter><Button onClick={createGame}>Créer</Button></DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              <Card className="mb-6">
+                <CardHeader><CardTitle className="text-base">Jeux ({gamesTotal})</CardTitle></CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader><TableRow><TableHead>Titre</TableHead><TableHead>Tenant</TableHead><TableHead>Statut</TableHead><TableHead>Stats</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {games.map((game) => (
+                        <TableRow key={game.id}>
+                          <TableCell className="font-medium">{game.title}</TableCell>
+                          <TableCell>{game.tenant?.name || game.tenant_id}</TableCell>
+                          <TableCell><Badge variant="outline">{game.status}</Badge></TableCell>
+                          <TableCell>{game.play_count || 0} plays · {game.prize_count || 0} lots</TableCell>
+                          <TableCell className="space-x-1">
+                            <Button size="sm" variant="outline" onClick={() => {setSelectedGameId(game.id); fetchGamePrizes(game.id);}}>Lots</Button>
+                            <Button size="icon" variant="ghost" onClick={() => duplicateGame(game)}><Copy className="w-4 h-4" /></Button>
+                            <Button size="icon" variant="ghost" onClick={() => changeGameStatus(game.id, game.status === 'active' ? 'paused' : 'active')}><CheckCircle2 className="w-4 h-4" /></Button>
+                            <Button size="icon" variant="ghost" onClick={() => deleteGame(game.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              {selectedGameId && (
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-base">Gestion des lots</CardTitle>
+                    <Dialog open={showCreatePrize} onOpenChange={setShowCreatePrize}>
+                      <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" />Ajouter un lot</Button></DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader><DialogTitle>Ajouter un lot</DialogTitle></DialogHeader>
+                        <div className="space-y-3">
+                          <Input placeholder="Nom" value={prizeForm.label} onChange={(e) => setPrizeForm({...prizeForm, label: e.target.value})} />
+                          <Input type="number" placeholder="Poids" value={prizeForm.weight} onChange={(e) => setPrizeForm({...prizeForm, weight: parseInt(e.target.value) || 1})} />
+                          <Input type="number" placeholder="Stock" value={prizeForm.stock} onChange={(e) => setPrizeForm({...prizeForm, stock: parseInt(e.target.value) || 0})} />
+                        </div>
+                        <DialogFooter><Button onClick={addPrizeToGame}>Ajouter</Button></DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader><TableRow><TableHead>Lot</TableHead><TableHead>Stock</TableHead><TableHead>Poids</TableHead><TableHead></TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {gamePrizes.map((prize) => (
+                          <TableRow key={prize.id}>
+                            <TableCell>{prize.label}</TableCell>
+                            <TableCell>{prize.stock_remaining}/{prize.stock}</TableCell>
+                            <TableCell>{prize.weight}</TableCell>
+                            <TableCell><Button variant="ghost" size="icon" onClick={() => deletePrize(prize.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button></TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
 
             {/* MESSAGES TAB */}
             <TabsContent value="messages">
