@@ -23,6 +23,22 @@ from routes.billing_routes import router as billing_router
 
 app = FastAPI(title="PrizeWheel Pro API")
 
+
+def _build_cors_settings() -> dict:
+    raw_origins = os.environ.get('CORS_ORIGINS', '*')
+    origins = [o.strip() for o in raw_origins.split(',') if o.strip()]
+    if not origins:
+        origins = ['*']
+
+    # Browsers reject Access-Control-Allow-Credentials with wildcard origin.
+    # Keep credentials only when explicit origins are configured.
+    allow_credentials = '*' not in origins
+
+    return {
+        'allow_origins': origins,
+        'allow_credentials': allow_credentials
+    }
+
 # Include all routers
 app.include_router(auth_router)
 app.include_router(admin_router)
@@ -32,10 +48,11 @@ app.include_router(game_router)
 app.include_router(billing_router)
 
 # CORS
+cors_settings = _build_cors_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_credentials=cors_settings['allow_credentials'],
+    allow_origins=cors_settings['allow_origins'],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -83,6 +100,7 @@ async def startup():
     # Seed super admin
     admin_email = os.environ.get('SUPER_ADMIN_EMAIL', 'admin@prizewheelpro.com')
     admin_password = os.environ.get('SUPER_ADMIN_PASSWORD', 'Admin123!')
+    ensure_admin_password = os.environ.get('SUPER_ADMIN_ENSURE_PASSWORD', 'true').lower() == 'true'
 
     existing_admin = await db.users.find_one({'email': admin_email})
     if not existing_admin:
@@ -101,6 +119,76 @@ async def startup():
         }
         await db.users.insert_one(admin)
         logger.info(f"Super admin created: {admin_email}")
+    elif ensure_admin_password:
+        await db.users.update_one(
+            {'id': existing_admin['id']},
+            {'$set': {
+                'password_hash': hash_password(admin_password),
+                'email_verified': True,
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        logger.info(f"Super admin password ensured for: {admin_email}")
+
+    # Seed demo tenant account (useful for first deploy smoke tests)
+    demo_tenant_email = os.environ.get('DEMO_TENANT_EMAIL', 'test@example.com').lower()
+    demo_tenant_password = os.environ.get('DEMO_TENANT_PASSWORD', 'Test123!')
+    demo_tenant_name = os.environ.get('DEMO_TENANT_NAME', 'Restaurant Test')
+
+    demo_user = await db.users.find_one({'email': demo_tenant_email}, {'_id': 0})
+    if not demo_user:
+        demo_tenant_id = str(uuid.uuid4())
+        demo_owner_id = str(uuid.uuid4())
+        demo_slug = 'restaurant-test'
+        if await db.tenants.find_one({'slug': demo_slug}, {'_id': 0}):
+            demo_slug = f"restaurant-test-{str(uuid.uuid4())[:6]}"
+
+        await db.tenants.insert_one({
+            'id': demo_tenant_id,
+            'name': demo_tenant_name,
+            'slug': demo_slug,
+            'owner_id': demo_owner_id,
+            'status': 'active',
+            'plan': 'free',
+            'timezone': 'Europe/Paris',
+            'default_language': 'fr',
+            'branding': {},
+            'created_at': datetime.now(timezone.utc).isoformat(),
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        })
+
+        await db.users.insert_one({
+            'id': demo_owner_id,
+            'email': demo_tenant_email,
+            'password_hash': hash_password(demo_tenant_password),
+            'role': 'tenant_owner',
+            'tenant_id': demo_tenant_id,
+            'name': demo_tenant_name,
+            'email_verified': True,
+            'verification_token': None,
+            'reset_token': None,
+            'created_at': datetime.now(timezone.utc).isoformat(),
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        })
+
+        await db.subscriptions.insert_one({
+            'id': str(uuid.uuid4()),
+            'tenant_id': demo_tenant_id,
+            'plan': 'free',
+            'status': 'active',
+            'created_at': datetime.now(timezone.utc).isoformat()
+        })
+        logger.info(f"Demo tenant owner created: {demo_tenant_email}")
+    else:
+        await db.users.update_one(
+            {'id': demo_user['id']},
+            {'$set': {
+                'password_hash': hash_password(demo_tenant_password),
+                'email_verified': True,
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        logger.info(f"Demo tenant owner password ensured: {demo_tenant_email}")
 
     # Seed plans
     plans = [
