@@ -13,6 +13,7 @@ import io
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/admin", tags=["admin-extended"])
@@ -77,6 +78,62 @@ class BanRequest(BaseModel):
 
 class TenantNoteCreate(BaseModel):
     content: str
+
+
+class AdminGameCreate(BaseModel):
+    tenant_id: str
+    title: str
+    title_fr: Optional[str] = None
+    description: Optional[str] = None
+    description_fr: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    legal_text: Optional[str] = None
+    legal_text_fr: Optional[str] = None
+    rules: Optional[str] = None
+    rules_fr: Optional[str] = None
+
+
+class AdminGameUpdate(BaseModel):
+    title: Optional[str] = None
+    title_fr: Optional[str] = None
+    description: Optional[str] = None
+    description_fr: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    legal_text: Optional[str] = None
+    legal_text_fr: Optional[str] = None
+    rules: Optional[str] = None
+    rules_fr: Optional[str] = None
+
+
+class AdminGameStatusUpdate(BaseModel):
+    status: str
+
+
+class AdminPrizeCreate(BaseModel):
+    label: str
+    label_fr: Optional[str] = None
+    weight: int = 1
+    stock: int = 0
+    prize_type: Optional[str] = "coupon"
+    value: Optional[str] = None
+    color: Optional[str] = "#3b82f6"
+
+
+class AdminPrizeUpdate(BaseModel):
+    label: Optional[str] = None
+    label_fr: Optional[str] = None
+    weight: Optional[int] = None
+    stock: Optional[int] = None
+    prize_type: Optional[str] = None
+    value: Optional[str] = None
+    color: Optional[str] = None
+
+
+class DuplicateGameRequest(BaseModel):
+    target_tenant_id: Optional[str] = None
+    title: Optional[str] = None
 
 
 # ==================== PLANS CRUD ====================
@@ -961,6 +1018,278 @@ async def get_fraud_flags_enhanced(
         'total': total,
         'flag_types': flag_types
     }
+
+
+# ==================== GAME MANAGEMENT (SUPER ADMIN) ====================
+
+@router.get("/games")
+async def list_games(
+    user: dict = Depends(require_super_admin),
+    tenant_id: Optional[str] = None,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100
+):
+    query = {}
+    if tenant_id:
+        query['tenant_id'] = tenant_id
+    if status:
+        query['status'] = status
+    if search:
+        query['title'] = {'$regex': search, '$options': 'i'}
+
+    games = await db.campaigns.find(query, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.campaigns.count_documents(query)
+
+    for game in games:
+        game['prize_count'] = await db.prizes.count_documents({'campaign_id': game['id']})
+        game['play_count'] = await db.plays.count_documents({'campaign_id': game['id'], 'is_test': {'$ne': True}})
+        game['tenant'] = await db.tenants.find_one({'id': game['tenant_id']}, {'_id': 0, 'id': 1, 'name': 1, 'slug': 1})
+
+    return {'games': games, 'total': total}
+
+
+@router.post("/games")
+async def create_game(req: AdminGameCreate, request: Request, user: dict = Depends(require_super_admin)):
+    tenant = await db.tenants.find_one({'id': req.tenant_id}, {'_id': 0})
+    if not tenant:
+        raise HTTPException(404, 'Tenant not found')
+
+    slug = re.sub(r'[^a-z0-9]+', '-', req.title.lower()).strip('-')
+    existing = await db.campaigns.find_one({'slug': slug, 'tenant_id': req.tenant_id})
+    if existing:
+        slug = f"{slug}-{str(uuid.uuid4())[:6]}"
+
+    game = {
+        'id': str(uuid.uuid4()),
+        'tenant_id': req.tenant_id,
+        'title': req.title,
+        'title_fr': req.title_fr,
+        'slug': slug,
+        'description': req.description,
+        'description_fr': req.description_fr,
+        'status': 'draft',
+        'start_date': req.start_date,
+        'end_date': req.end_date,
+        'legal_text': req.legal_text,
+        'legal_text_fr': req.legal_text_fr,
+        'rules': req.rules,
+        'rules_fr': req.rules_fr,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    await db.campaigns.insert_one(game)
+
+    await db.audit_logs.insert_one({
+        'id': str(uuid.uuid4()),
+        'tenant_id': req.tenant_id,
+        'user_id': user['id'],
+        'action': 'admin_create_game',
+        'category': 'operations',
+        'details': f'Created game "{req.title}" for tenant {tenant.get("name", req.tenant_id)}',
+        'ip_address': request.client.host if request.client else 'unknown',
+        'created_at': datetime.now(timezone.utc).isoformat()
+    })
+
+    game.pop('_id', None)
+    return game
+
+
+@router.put("/games/{game_id}")
+async def update_game(game_id: str, req: AdminGameUpdate, request: Request, user: dict = Depends(require_super_admin)):
+    game = await db.campaigns.find_one({'id': game_id}, {'_id': 0})
+    if not game:
+        raise HTTPException(404, 'Game not found')
+
+    update = {k: v for k, v in req.model_dump().items() if v is not None}
+    if not update:
+        raise HTTPException(400, 'No fields to update')
+    update['updated_at'] = datetime.now(timezone.utc).isoformat()
+
+    await db.campaigns.update_one({'id': game_id}, {'$set': update})
+    updated = await db.campaigns.find_one({'id': game_id}, {'_id': 0})
+
+    await db.audit_logs.insert_one({
+        'id': str(uuid.uuid4()),
+        'tenant_id': game.get('tenant_id'),
+        'user_id': user['id'],
+        'action': 'admin_update_game',
+        'category': 'operations',
+        'details': f'Updated game "{game.get("title", game_id)}"',
+        'ip_address': request.client.host if request.client else 'unknown',
+        'created_at': datetime.now(timezone.utc).isoformat()
+    })
+    return updated
+
+
+@router.put("/games/{game_id}/status")
+async def update_game_status(game_id: str, req: AdminGameStatusUpdate, request: Request, user: dict = Depends(require_super_admin)):
+    valid_statuses = {'draft', 'test', 'active', 'paused', 'ended'}
+    if req.status not in valid_statuses:
+        raise HTTPException(400, 'Invalid status')
+
+    game = await db.campaigns.find_one({'id': game_id}, {'_id': 0})
+    if not game:
+        raise HTTPException(404, 'Game not found')
+
+    await db.campaigns.update_one(
+        {'id': game_id},
+        {'$set': {'status': req.status, 'updated_at': datetime.now(timezone.utc).isoformat()}}
+    )
+
+    await db.audit_logs.insert_one({
+        'id': str(uuid.uuid4()),
+        'tenant_id': game.get('tenant_id'),
+        'user_id': user['id'],
+        'action': 'admin_change_game_status',
+        'category': 'operations',
+        'details': f'Game "{game.get("title", game_id)}" status: {game.get("status", "unknown")} -> {req.status}',
+        'ip_address': request.client.host if request.client else 'unknown',
+        'created_at': datetime.now(timezone.utc).isoformat()
+    })
+    return {'message': 'Status updated'}
+
+
+@router.post("/games/{game_id}/duplicate")
+async def duplicate_game(game_id: str, req: DuplicateGameRequest, request: Request, user: dict = Depends(require_super_admin)):
+    source = await db.campaigns.find_one({'id': game_id}, {'_id': 0})
+    if not source:
+        raise HTTPException(404, 'Source game not found')
+
+    target_tenant_id = req.target_tenant_id or source['tenant_id']
+    tenant = await db.tenants.find_one({'id': target_tenant_id}, {'_id': 0})
+    if not tenant:
+        raise HTTPException(404, 'Target tenant not found')
+
+    base_title = req.title or f"{source.get('title', 'Game')} (Copy)"
+    slug = re.sub(r'[^a-z0-9]+', '-', base_title.lower()).strip('-')
+    existing = await db.campaigns.find_one({'slug': slug, 'tenant_id': target_tenant_id})
+    if existing:
+        slug = f"{slug}-{str(uuid.uuid4())[:6]}"
+
+    new_id = str(uuid.uuid4())
+    cloned = {
+        **source,
+        'id': new_id,
+        'tenant_id': target_tenant_id,
+        'title': base_title,
+        'slug': slug,
+        'status': 'draft',
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    await db.campaigns.insert_one(cloned)
+
+    source_prizes = await db.prizes.find({'campaign_id': game_id}, {'_id': 0}).to_list(500)
+    if source_prizes:
+        cloned_prizes = []
+        now = datetime.now(timezone.utc).isoformat()
+        for prize in source_prizes:
+            cloned_prizes.append({
+                **prize,
+                'id': str(uuid.uuid4()),
+                'campaign_id': new_id,
+                'tenant_id': target_tenant_id,
+                'stock_remaining': prize.get('stock', 0),
+                'created_at': now
+            })
+        await db.prizes.insert_many(cloned_prizes)
+
+    await db.audit_logs.insert_one({
+        'id': str(uuid.uuid4()),
+        'tenant_id': target_tenant_id,
+        'user_id': user['id'],
+        'action': 'admin_duplicate_game',
+        'category': 'operations',
+        'details': f'Duplicated game {game_id} to {new_id} for tenant {target_tenant_id}',
+        'ip_address': request.client.host if request.client else 'unknown',
+        'created_at': datetime.now(timezone.utc).isoformat()
+    })
+
+    cloned.pop('_id', None)
+    return cloned
+
+
+@router.delete("/games/{game_id}")
+async def delete_game(game_id: str, request: Request, user: dict = Depends(require_super_admin)):
+    game = await db.campaigns.find_one({'id': game_id}, {'_id': 0})
+    if not game:
+        raise HTTPException(404, 'Game not found')
+    await db.campaigns.delete_one({'id': game_id})
+    await db.prizes.delete_many({'campaign_id': game_id})
+
+    await db.audit_logs.insert_one({
+        'id': str(uuid.uuid4()),
+        'tenant_id': game.get('tenant_id'),
+        'user_id': user['id'],
+        'action': 'admin_delete_game',
+        'category': 'operations',
+        'details': f'Deleted game "{game.get("title", game_id)}" and associated prizes',
+        'ip_address': request.client.host if request.client else 'unknown',
+        'created_at': datetime.now(timezone.utc).isoformat()
+    })
+    return {'message': 'Game deleted'}
+
+
+@router.get("/games/{game_id}/prizes")
+async def list_game_prizes(game_id: str, user: dict = Depends(require_super_admin)):
+    game = await db.campaigns.find_one({'id': game_id}, {'_id': 0})
+    if not game:
+        raise HTTPException(404, 'Game not found')
+    prizes = await db.prizes.find({'campaign_id': game_id}, {'_id': 0}).to_list(200)
+    return {'prizes': prizes}
+
+
+@router.post("/games/{game_id}/prizes")
+async def create_game_prize(game_id: str, req: AdminPrizeCreate, user: dict = Depends(require_super_admin)):
+    game = await db.campaigns.find_one({'id': game_id}, {'_id': 0})
+    if not game:
+        raise HTTPException(404, 'Game not found')
+
+    prize = {
+        'id': str(uuid.uuid4()),
+        'campaign_id': game_id,
+        'tenant_id': game['tenant_id'],
+        'label': req.label,
+        'label_fr': req.label_fr,
+        'weight': req.weight,
+        'stock': req.stock,
+        'stock_remaining': req.stock,
+        'prize_type': req.prize_type,
+        'value': req.value,
+        'color': req.color,
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    await db.prizes.insert_one(prize)
+    prize.pop('_id', None)
+    return prize
+
+
+@router.put("/game-prizes/{prize_id}")
+async def update_game_prize(prize_id: str, req: AdminPrizeUpdate, user: dict = Depends(require_super_admin)):
+    prize = await db.prizes.find_one({'id': prize_id}, {'_id': 0})
+    if not prize:
+        raise HTTPException(404, 'Prize not found')
+
+    update = {k: v for k, v in req.model_dump().items() if v is not None}
+    if 'stock' in update:
+        diff = update['stock'] - prize.get('stock', 0)
+        update['stock_remaining'] = max(0, prize.get('stock_remaining', 0) + diff)
+
+    if update:
+        await db.prizes.update_one({'id': prize_id}, {'$set': update})
+    updated = await db.prizes.find_one({'id': prize_id}, {'_id': 0})
+    return updated
+
+
+@router.delete("/game-prizes/{prize_id}")
+async def delete_game_prize(prize_id: str, user: dict = Depends(require_super_admin)):
+    prize = await db.prizes.find_one({'id': prize_id}, {'_id': 0})
+    if not prize:
+        raise HTTPException(404, 'Prize not found')
+    await db.prizes.delete_one({'id': prize_id})
+    return {'message': 'Prize deleted'}
 
 
 # ==================== TENANT IMPERSONATION ====================
