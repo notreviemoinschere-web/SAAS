@@ -10,7 +10,11 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.9
+      - key: PIP_PREFER_BINARY
+        value: "1"
       - key: MONGO_URL
+        sync: false
+      - key: MONGODB_URI
         sync: false
       - key: DB_NAME
         sync: false

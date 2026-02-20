@@ -31,7 +31,7 @@ Tu peux la définir:
 - ou via le fichier `.python-version` (déjà ajouté dans ce repo)
 
 ### Variables d'environnement minimales
-- `MONGO_URL` **ou** `MONGODB_URI`
+- `MONGO_URL` **ou** `MONGODB_URI` (tu peux renseigner les deux; l'app prend le premier disponible)
 - `DB_NAME` (optionnel si le nom de base est déjà présent dans l'URI Mongo)
 - `JWT_SECRET`
 - `SUPER_ADMIN_PASSWORD`
@@ -39,3 +39,7 @@ Tu peux la définir:
 
 ## Option recommandée: Blueprint Render
 Ce repo contient `render.yaml` à la racine avec les valeurs déjà prêtes (rootDir, commandes, health check, Python version, env vars).
+
+
+### Option anti-build source (recommandé)
+- `PIP_PREFER_BINARY=1` pour privilégier les wheels précompilées pendant `pip install`.
