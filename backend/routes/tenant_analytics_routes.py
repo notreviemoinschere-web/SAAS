@@ -75,13 +75,17 @@ async def get_players(
     skip = (page - 1) * limit
 
     # Get players with campaign info
+    # Handle both old format (created_at) and new format (played_at)
     pipeline = [
         {"$match": query},
-        {"$sort": {"played_at": -1}},
+        {"$addFields": {
+            "sort_date": {"$ifNull": ["$played_at", "$created_at"]}
+        }},
+        {"$sort": {"sort_date": -1}},
         {"$skip": skip},
         {"$limit": limit},
         {"$lookup": {
-            "from": "games",
+            "from": "campaigns",
             "localField": "campaign_id",
             "foreignField": "id",
             "as": "campaign"
@@ -92,15 +96,21 @@ async def get_players(
             "foreignField": "id",
             "as": "reward"
         }},
+        {"$lookup": {
+            "from": "players",
+            "localField": "player_id",
+            "foreignField": "id",
+            "as": "player"
+        }},
         {"$project": {
             "_id": 0,
-            "id": "$play_id",
-            "email": 1,
-            "phone": 1,
+            "id": {"$ifNull": ["$play_id", "$id"]},
+            "email": {"$ifNull": ["$email", {"$arrayElemAt": ["$player.email", 0]}]},
+            "phone": {"$ifNull": ["$phone", {"$arrayElemAt": ["$player.phone", 0]}]},
             "first_name": 1,
             "campaign_id": 1,
             "campaign_title": {"$arrayElemAt": ["$campaign.title", 0]},
-            "played_at": 1,
+            "played_at": {"$ifNull": ["$played_at", "$created_at"]},
             "won": {"$gt": ["$prize_id", None]},
             "prize_label": 1,
             "marketing_consent": {"$ifNull": ["$marketing_consent", False]}
