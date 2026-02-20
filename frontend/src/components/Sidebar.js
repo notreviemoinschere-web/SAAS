@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useI18n } from "../lib/i18n";
 import { useAuth } from "../lib/auth";
 import { Button } from "../components/ui/button";
-import { Gift, LayoutDashboard, Megaphone, Users, UserCog, CreditCard, Award, TicketCheck, Shield, ScrollText, ShieldAlert, Globe, Menu, X, LogOut, ChevronDown } from "lucide-react";
+import { Gift, LayoutDashboard, Megaphone, Users, UserCog, CreditCard, Award, TicketCheck, Shield, ScrollText, ShieldAlert, Globe, Menu, X, LogOut, ChevronDown, Building2 } from "lucide-react";
 
 export default function Sidebar() {
   const { t, lang, switchLang } = useI18n();
@@ -21,6 +21,7 @@ export default function Sidebar() {
 
   const tenantLinks = [
     { path: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { path: "/dashboard/profile", label: "Mon Entreprise", icon: Building2 },
     { path: "/dashboard/campaigns/new", label: t("tenant.new_campaign"), icon: Megaphone },
     { path: "/dashboard/redeem", label: t("nav.redeem"), icon: TicketCheck },
     { path: "/dashboard/billing", label: t("nav.billing"), icon: CreditCard },
