@@ -14,7 +14,7 @@ from bson import ObjectId
 from database import db
 from auth import get_current_user
 
-router = APIRouter(prefix="/tenant", tags=["tenant-analytics"])
+router = APIRouter(prefix="/api/tenant", tags=["tenant-analytics"])
 
 
 @router.get("/players")
