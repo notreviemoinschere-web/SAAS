@@ -155,33 +155,7 @@ async def upload_logo(
     return {'message': 'Logo uploaded', 'logo_url': base64_image}
 
 
-@router.get("/players")
-async def get_tenant_players(
-    user: dict = Depends(require_tenant_access),
-    campaign_id: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 100
-):
-    """Get players with their contact info for remarketing."""
-    query = {'tenant_id': user['tenant_id']}
-    if campaign_id:
-        query['campaign_id'] = campaign_id
-    
-    players = await db.players.find(query, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
-    total = await db.players.count_documents(query)
-    
-    # Enrich with consent info
-    for p in players:
-        consent = await db.consents.find_one({
-            'player_id': p['id'],
-            'consent_type': 'marketing'
-        })
-        p['has_marketing_consent'] = consent is not None
-        
-        # Get play count
-        p['play_count'] = await db.plays.count_documents({'player_id': p['id']})
-    
-    return {'players': players, 'total': total}
+# NOTE: /players endpoint moved to tenant_analytics_routes.py with enhanced filters and stats
 
 
 @router.get("/campaigns/{campaign_id}/qrcode")
