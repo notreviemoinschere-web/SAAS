@@ -290,37 +290,62 @@ async def stripe_webhook(request: Request):
         return {"status": "ok"}
 
     try:
-        from emergentintegrations.payments.stripe.checkout import StripeCheckout
-        host_url = str(request.base_url)
-        webhook_url = f"{host_url}api/webhook/stripe"
-        stripe_checkout = StripeCheckout(api_key=stripe_key, webhook_url=webhook_url)
-        webhook_response = await stripe_checkout.handle_webhook(body, stripe_signature)
+        import stripe
 
-        if webhook_response and webhook_response.session_id:
-            tx = await db.payment_transactions.find_one(
-                {'session_id': webhook_response.session_id}, {'_id': 0}
+@api.post("/api/webhook/stripe")
+async def stripe_webhook(request: Request):
+    stripe_key = os.environ.get("STRIPE_API_KEY")
+    if not stripe_key:
+        return {"status": "ok"}
+
+    stripe.api_key = stripe_key
+
+    payload = await request.body()
+    sig_header = request.headers.get("Stripe-Signature")
+
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+
+    if not webhook_secret:
+        # Pas configuré → ne bloque pas le serveur
+        return {"status": "ok"}
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload=payload,
+            sig_header=sig_header,
+            secret=webhook_secret
+        )
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    # Exemple : checkout terminé
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        session_id = session.get("id")
+        metadata = session.get("metadata", {})
+
+        tenant_id = metadata.get("tenant_id")
+        plan = metadata.get("plan", "free")
+
+        if session_id:
+            await db.payment_transactions.update_one(
+                {"session_id": session_id},
+                {"$set": {
+                    "payment_status": "paid",
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
             )
-            if tx and tx.get('payment_status') != 'paid':
-                new_status = webhook_response.payment_status or 'unknown'
-                await db.payment_transactions.update_one(
-                    {'session_id': webhook_response.session_id},
-                    {'$set': {
-                        'payment_status': new_status,
-                        'updated_at': datetime.now(timezone.utc).isoformat()
+
+            if tenant_id:
+                await db.tenants.update_one(
+                    {"id": tenant_id},
+                    {"$set": {
+                        "plan": plan,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
                     }}
                 )
-                if new_status == 'paid' and tx.get('tenant_id'):
-                    plan = tx.get('plan', 'free')
-                    await db.tenants.update_one(
-                        {'id': tx['tenant_id']},
-                        {'$set': {'plan': plan, 'updated_at': datetime.now(timezone.utc).isoformat()}}
-                    )
-    except Exception as e:
-        logger.error(f"Webhook error: {e}")
 
     return {"status": "ok"}
-
-
 # Cookie consent endpoint
 @app.post("/api/cookie-consent")
 async def record_cookie_consent(request: Request):
