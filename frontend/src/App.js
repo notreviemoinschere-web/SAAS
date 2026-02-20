@@ -50,13 +50,15 @@ function AppRoutes() {
       {/* Tenant */}
       <Route path="/dashboard" element={<ProtectedRoute roles={["tenant_owner", "tenant_staff", "super_admin"]}><TenantDashboard /></ProtectedRoute>} />
       <Route path="/dashboard/profile" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><TenantProfile /></ProtectedRoute>} />
+      <Route path="/dashboard/players" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><TenantPlayers /></ProtectedRoute>} />
+      <Route path="/dashboard/analytics" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><TenantAnalytics /></ProtectedRoute>} />
       <Route path="/dashboard/campaigns/new" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><CampaignEditor /></ProtectedRoute>} />
       <Route path="/dashboard/campaigns/:id" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><CampaignEditor /></ProtectedRoute>} />
       <Route path="/dashboard/redeem" element={<ProtectedRoute roles={["tenant_owner", "tenant_staff", "super_admin"]}><StaffRedeem /></ProtectedRoute>} />
       <Route path="/dashboard/billing" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><Billing /></ProtectedRoute>} />
 
       {/* Public Game */}
-      <Route path="/play/:slug" element={<PlayGame />} />
+      <Route path="/play/:slug" element={<PlayGame2026 />} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />
