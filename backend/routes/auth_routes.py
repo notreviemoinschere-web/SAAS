@@ -15,9 +15,21 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 class SignupRequest(BaseModel):
-    business_name: str
+    # Basic info
+    first_name: str
+    last_name: str
+    company_name: str
+    phone: str
     email: str
     password: str
+    gdpr_consent: bool = True
+    # Optional fields that can be filled later
+    address: str = ""
+    city: str = ""
+    postal_code: str = ""
+    country: str = "France"
+    registration_number: str = ""  # SIRET/SIREN
+    vat_number: str = ""
 
 
 class LoginRequest(BaseModel):
@@ -45,29 +57,68 @@ def create_slug(name: str) -> str:
 
 @router.post("/signup")
 async def signup(req: SignupRequest, request: Request):
+    # Validate required fields
+    if not req.first_name or not req.first_name.strip():
+        raise HTTPException(400, 'Le prénom est requis')
+    if not req.last_name or not req.last_name.strip():
+        raise HTTPException(400, 'Le nom est requis')
+    if not req.company_name or not req.company_name.strip():
+        raise HTTPException(400, "Le nom de l'entreprise est requis")
+    if not req.phone or not req.phone.strip():
+        raise HTTPException(400, 'Le téléphone est requis')
+    if not req.email or not req.email.strip():
+        raise HTTPException(400, "L'email est requis")
+    if not req.password or len(req.password) < 6:
+        raise HTTPException(400, 'Le mot de passe doit faire au moins 6 caractères')
+    
+    # Validate GDPR consent
+    if not req.gdpr_consent:
+        raise HTTPException(400, 'Le consentement RGPD est requis')
+    
     existing = await db.users.find_one({'email': req.email.lower()})
     if existing:
         raise HTTPException(400, 'Email already registered')
 
     tenant_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
-    verification_token = generate_verification_token()
-    slug = create_slug(req.business_name)
+    slug = create_slug(req.company_name)
 
     existing_slug = await db.tenants.find_one({'slug': slug})
     if existing_slug:
         slug = f"{slug}-{str(uuid.uuid4())[:6]}"
 
+    # Full tenant profile with business details
     tenant = {
         'id': tenant_id,
-        'name': req.business_name,
+        'name': req.company_name,
         'slug': slug,
         'owner_id': user_id,
         'status': 'active',
         'plan': 'free',
-        'timezone': 'Europe/London',
-        'default_language': 'en',
-        'branding': {},
+        'timezone': 'Europe/Paris',
+        'default_language': 'fr',
+        # Business profile
+        'profile': {
+            'manager_first_name': req.first_name,
+            'manager_last_name': req.last_name,
+            'company_name': req.company_name,
+            'address': req.address,
+            'city': req.city,
+            'postal_code': req.postal_code,
+            'country': req.country,
+            'phone': req.phone,
+            'email': req.email.lower(),
+            'registration_number': req.registration_number,
+            'vat_number': req.vat_number,
+            'logo_url': '',
+            'google_review_url': '',
+            'social_links': {}
+        },
+        'branding': {
+            'primary_color': '#6366f1',
+            'secondary_color': '#8b5cf6',
+            'logo_url': ''
+        },
         'created_at': datetime.now(timezone.utc).isoformat(),
         'updated_at': datetime.now(timezone.utc).isoformat()
     }
@@ -78,10 +129,15 @@ async def signup(req: SignupRequest, request: Request):
         'password_hash': hash_password(req.password),
         'role': 'tenant_owner',
         'tenant_id': tenant_id,
-        'name': req.business_name,
-        'email_verified': False,
-        'verification_token': verification_token,
+        'first_name': req.first_name,
+        'last_name': req.last_name,
+        'name': f"{req.first_name} {req.last_name}",
+        'phone': req.phone,
+        'email_verified': True,  # Auto-verify for simpler flow
+        'verification_token': None,
         'reset_token': None,
+        'gdpr_consent': True,
+        'gdpr_consent_date': datetime.now(timezone.utc).isoformat(),
         'created_at': datetime.now(timezone.utc).isoformat(),
         'updated_at': datetime.now(timezone.utc).isoformat()
     }
@@ -105,16 +161,33 @@ async def signup(req: SignupRequest, request: Request):
         'tenant_id': tenant_id,
         'user_id': user_id,
         'action': 'signup',
-        'details': f'Tenant {req.business_name} created',
+        'category': 'auth',
+        'details': f'Tenant {req.company_name} created by {req.first_name} {req.last_name}',
         'ip_address': request.client.host if request.client else 'unknown',
         'created_at': datetime.now(timezone.utc).isoformat()
     })
 
+    # Auto-login after signup
+    token = create_token(user_id, 'tenant_owner', tenant_id)
+
     return {
-        'message': 'Account created. Please verify your email.',
-        'verification_token': verification_token,
-        'user_id': user_id,
-        'tenant_id': tenant_id
+        'message': 'Account created successfully',
+        'token': token,
+        'user': {
+            'id': user_id,
+            'email': user['email'],
+            'name': user['name'],
+            'role': 'tenant_owner',
+            'tenant_id': tenant_id,
+            'email_verified': True
+        },
+        'tenant': {
+            'id': tenant_id,
+            'name': tenant['name'],
+            'slug': slug,
+            'plan': 'free'
+        },
+        'show_plan_selection': True  # Flag to show plan popup
     }
 
 
@@ -124,10 +197,8 @@ async def login(req: LoginRequest):
     if not user or not verify_password(req.password, user['password_hash']):
         raise HTTPException(401, 'Invalid email or password')
 
-    if user.get('role') != 'super_admin' and not user.get('email_verified'):
-        raise HTTPException(403, 'Please verify your email first')
-
     # Check tenant status
+    tenant = None
     if user.get('tenant_id'):
         tenant = await db.tenants.find_one({'id': user['tenant_id']}, {'_id': 0})
         if tenant and tenant.get('status') == 'suspended':
@@ -141,10 +212,13 @@ async def login(req: LoginRequest):
             'id': user['id'],
             'email': user['email'],
             'name': user.get('name', ''),
+            'first_name': user.get('first_name', ''),
+            'last_name': user.get('last_name', ''),
             'role': user['role'],
             'tenant_id': user.get('tenant_id'),
-            'email_verified': user.get('email_verified', False)
-        }
+            'email_verified': user.get('email_verified', True)
+        },
+        'tenant': tenant
     }
 
 

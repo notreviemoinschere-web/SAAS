@@ -327,21 +327,7 @@ async def delete_prize(prize_id: str, user: dict = Depends(require_tenant_owner)
 
 
 # --- Players ---
-@router.get("/players")
-async def list_players(
-    user: dict = Depends(require_tenant_owner),
-    skip: int = 0,
-    limit: int = 50,
-    campaign_id: Optional[str] = None
-):
-    tid = user['tenant_id']
-    query = {'tenant_id': tid}
-    if campaign_id:
-        query['campaign_id'] = campaign_id
-
-    players = await db.players.find(query, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
-    total = await db.players.count_documents(query)
-    return {'players': players, 'total': total}
+# NOTE: Moved to tenant_analytics_routes.py with enhanced filters and stats
 
 
 # --- Staff ---

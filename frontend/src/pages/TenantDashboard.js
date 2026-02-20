@@ -99,9 +99,10 @@ export default function TenantDashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold">{tenant?.name || t("tenant.dashboard")}</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Plan: <Badge variant="outline" className="capitalize ml-1">{tenant?.plan || "free"}</Badge>
-              </p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                <span>Plan:</span>
+                <Badge variant="outline" className="capitalize">{tenant?.plan || "free"}</Badge>
+              </div>
             </div>
           </div>
 

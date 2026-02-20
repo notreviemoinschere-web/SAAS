@@ -11,9 +11,13 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import AdminDashboard from "@/pages/AdminDashboard";
 import TenantDetail from "@/pages/TenantDetail";
+import AdminCampaignBuilder from "@/pages/AdminCampaignBuilder";
 import TenantDashboard from "@/pages/TenantDashboard";
+import TenantProfile from "@/pages/TenantProfile";
+import TenantPlayers from "@/pages/TenantPlayers";
+import TenantAnalytics from "@/pages/TenantAnalytics";
 import CampaignEditor from "@/pages/CampaignEditor";
-import PlayGame from "@/pages/PlayGame";
+import PlayGame2026 from "@/pages/PlayGame2026";
 import StaffRedeem from "@/pages/StaffRedeem";
 import Billing from "@/pages/Billing";
 
@@ -40,16 +44,21 @@ function AppRoutes() {
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute roles={["super_admin"]}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/tenants/:tenantId" element={<ProtectedRoute roles={["super_admin"]}><TenantDetail /></ProtectedRoute>} />
+      <Route path="/admin/tenants/:tenantId/campaigns" element={<ProtectedRoute roles={["super_admin"]}><AdminCampaignBuilder /></ProtectedRoute>} />
+      <Route path="/admin/tenants/:tenantId/campaigns/:campaignId" element={<ProtectedRoute roles={["super_admin"]}><AdminCampaignBuilder /></ProtectedRoute>} />
 
       {/* Tenant */}
       <Route path="/dashboard" element={<ProtectedRoute roles={["tenant_owner", "tenant_staff", "super_admin"]}><TenantDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/profile" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><TenantProfile /></ProtectedRoute>} />
+      <Route path="/dashboard/players" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><TenantPlayers /></ProtectedRoute>} />
+      <Route path="/dashboard/analytics" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><TenantAnalytics /></ProtectedRoute>} />
       <Route path="/dashboard/campaigns/new" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><CampaignEditor /></ProtectedRoute>} />
       <Route path="/dashboard/campaigns/:id" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><CampaignEditor /></ProtectedRoute>} />
       <Route path="/dashboard/redeem" element={<ProtectedRoute roles={["tenant_owner", "tenant_staff", "super_admin"]}><StaffRedeem /></ProtectedRoute>} />
       <Route path="/dashboard/billing" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><Billing /></ProtectedRoute>} />
 
       {/* Public Game */}
-      <Route path="/play/:slug" element={<PlayGame />} />
+      <Route path="/play/:slug" element={<PlayGame2026 />} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />

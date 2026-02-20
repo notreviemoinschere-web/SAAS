@@ -1,0 +1,195 @@
+<analysis>**original_problem_statement:**
+The user wants to build a production-ready, multi-tenant SaaS gamification platform. The core application is functional, and the user has provided a series of detailed feature requests to build out a comprehensive Super Admin panel and enhance the Tenant (business) dashboard.
+
+**LATEST REQUEST (from user messages 105, 108):**
+The user has provided a large, multi-part feature request, superseding previous instructions.
+
+**Phase 1 (Current Priority):**
+1.  **Super Admin Done-for-You Campaign Builder:** A full-featured wizard within the Super Admin panel to create, manage, test, and publish campaigns on behalf of tenants. This must include audit logging for all actions.
+2.  **Simplified Tenant Signup:** Rework the registration process to be a simple form (name, company, phone, email, password) followed by a popup to select a subscription plan.
+3.  **Complete Tenant Profile:** Tenants must have a My Company section to manage their full business details (manager name, company name, address, tax/registration numbers, phone, email, logo). This data should be visible to the Super Admin and used for invoicing.
+4.  **Campaign Enhancements:**
+    *   Tenants should be able to add their social media links to campaigns.
+    *   Generate a QR code that links directly to the game.
+5.  **Player Data Access:** Tenants need a view to see player contact information (WhatsApp, email, name) for remarketing purposes.
+
+**Phase 2 (Next):**
+1.  **Game Wheel Redesign:** A complete visual and UX overhaul of the wheel of fortune game to be perfect and pro, worthy of 2026 with beautiful animations.
+2.  **Enhanced Player Flow:** The game page must include mandatory GDPR consent, pre-play tasks (e.g., follow social media), a copy code button for winners, and an optional Google Review link at the end.
+3.  **Legal Pages:** Create standard pages for Legal Mentions, Cookies, Privacy Policy, and Terms of Sale.
+
+**User's preferred language**: French. The next agent MUST respond in French.
+
+**what currently exists?**
+The agent has built the initial backend and frontend scaffolding for the latest user requests (Phase 1). This includes:
+-   **Backend:** New database schemas (), utility functions for encryption (), and a full suite of new API endpoints for the Admin Campaign Builder and Tenant Profile management have been created. Dependencies for  and  have been installed.
+-   **Frontend:** New pages have been created for the simplified signup flow (), the Tenant Profile (), and the Admin Campaign Builder (). Existing pages like the  and  have been updated to include entry points to these new features.
+-   **Initial Verification:** The agent has performed basic visual verification via screenshots, confirming the new pages and components render without crashing. The new simplified signup API and the Admin Campaign Builder API have been tested with basic  commands.
+
+**Last working item**:
+-   Last item agent was working: Verifying the newly created Mon Entreprise (My Company) page for tenants. The agent had just confirmed the main Informations tab was working and was about to check the Réseaux Sociaux (Social Networks) tab.
+-   Status: IN PROGRESS
+-   Agent Testing Done: N (Only basic smoke tests and visual checks via screenshots were performed. No end-to-end functional testing has been done on the new features.)
+-   Which testing method agent to use? Both.
+    -   **Frontend testing agent**: To conduct a full E2E test of the new user flows: simplified signup, tenant profile completion, and the admin campaign builder wizard.
+    -   **Backend testing agent**: To create a comprehensive test suite for all new API endpoints (, ).
+-   User Testing Done: N
+
+**All Pending/In progress Issue list**:
+  - **Issue 1 (P0): Incomplete Validation of Initial Super Admin Features.**
+    - Description: In a previous message (88), the user requested specific tests for consent-gated exports, server-side plan gating, and fraud ban enforcement. The agent began validation with screenshots but was interrupted by a new, larger request. These core functionalities have not been fully tested and confirmed to work as specified.
+    - Status: NOT STARTED
+    - Next debug checklist:
+        1.  Execute the test plan from user message 88, section 2 (A, B, C, D).
+        2.  A) Create two players (one with consent, one without) and test the  export.
+        3.  B) Use  to confirm a Free plan tenant gets an API error when trying to export, while a Pro plan tenant succeeds.
+        4.  C) Ban an IP/device and confirm the  endpoint returns an error from that source.
+    - Why fix this issue and what will be achieved with the fix?: Ensures the platform's core security and business logic are sound before building more features on top.
+
+ - **Issue 2 (P1): Incorrect Plan Limits in UI.**
+    - Description: During screenshot validation (message 97), the agent noticed the plan limits displayed in the Super Admin's Tenant Detail -> Billing tab were incorrect (e.g., showing 20 plays/month instead of 500 for the Free plan).
+    - Status: NOT STARTED
+    - Next debug checklist:
+        1.  View .
+        2.  Inspect the  tab component.
+        3.  Check the API response from  and the plan data from  to find the source of the incorrect limit values.
+        4.  Correct the frontend code to display the right limits associated with the tenant's current plan.
+    - Why fix this issue and what will be achieved with the fix?: Fixes a data integrity bug and ensures admins see correct information.
+
+**In progress Task List**:
+  - **Task 1 (P0): Complete and Test Phase 1 Features.**
+     - Description: The agent has created the basic files and routes for the simplified signup, tenant profile, and admin campaign builder. This task is to finish the implementation, connect all frontend and backend logic, and perform thorough testing.
+     - Where to resume:
+        1.  **Simplified Signup:** Implement the plan selection popup that should appear after a successful registration.
+        2.  **Tenant Profile:** Ensure that data saved in the My Company page (especially social media links and logo) is correctly stored and can be used by other parts of the app (like the game page).
+        3.  **Admin Campaign Builder:** Fully test the multi-step wizard. Ensure campaigns created by the admin appear correctly for the tenant. Test the status transitions (Draft -> Test -> Active) and the test link generation ().
+        4.  **QR Code:** Implement the frontend component/button that calls the backend API to generate and display the QR code for a campaign.
+     - What will be achieved with this?: This will complete the entire feature set requested by the user in messages 105 and 108, making the platform significantly more powerful for both admins and tenants.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix?: Both.
+
+**Upcoming and Future Tasks**
+
+**Upcoming Tasks (P1):**
+-   **Game Wheel & Player Flow Redesign:** Overhaul the  component and the  page to match the user's 2026 pro design requirements, including animations, mandatory GDPR consent, pre-play tasks (follow social media), and a post-game Google Review option.
+-   **Tenant-Facing Player List:** Create a new page in the tenant dashboard () that lists all players who have participated in their campaigns, showing their contact details for remarketing.
+
+**Future Tasks (P2):**
+-   **Legal Pages:** Create static pages for Mentions légales, Cookie, Politique de confidentialité, and Condition générale de vente.
+-   **Enhanced Invoicing:** While Stripe generates invoices, the user's request for full company details on the profile implies a need to customize these invoices or generate custom PDF documents.
+
+**Completed work in this session**
+-   **Super Admin Panel (Phase 2):**
+    -   Created backend API routes for the Admin Campaign Builder ().
+    -   Created the frontend wizard for the Admin Campaign Builder ().
+-   **Tenant Dashboard (Phase 1):**
+    -   Implemented a new simplified signup flow ().
+    -   Created a comprehensive My Company profile page () with tabs for Info, Social Media, and Appearance.
+    -   Created backend API routes to manage tenant profile data ().
+-   **Infrastructure:**
+    -   Added  for encryption and  for QR code generation.
+    -   Updated database schemas to include  and added company detail fields to the  collection.
+    -   Updated UI navigation () and routing () to accommodate all new pages.
+
+**Earlier issues found/mentioned but not fixed**
+-   **Issue 1:** The validation checklist from user message 88 (testing consent-gated exports, plan gating, fraud bans) was not completed.
+-   **Issue 2:** A bug where incorrect plan limits are displayed on the admin's tenant detail page was identified but not fixed.
+
+**Known issue recurrence from previous fork**
+-   None.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Backend:** FastAPI, Python, MongoDB ().
+- **Frontend:** React, JavaScript, Tailwind CSS, Shadcn/UI.
+- **Authentication:** JWT.
+- **Payments:** Stripe.
+- **New Libraries:**  (for Fernet encryption of Stripe keys),  (for game URL QR codes).
+
+**key DB schema**
+- **tenants**: {..., : {, , , etc.}}
+- **users**: {..., , , , } (for simplified signup)
+- **tenant_profiles**: {, , : {}, : {}} (NEW)
+- **plans**: {, , , , }
+- **games**: {..., : admin | tenant}
+
+**changes in tech stack**
+- None.
+
+**All files of reference**
+**Newly Created:**
+-   : For shared utilities like encryption.
+-   : APIs for the Super Admin campaign builder.
+-   : APIs for the tenant company profile.
+-   : UI for the admin campaign wizard.
+-   : UI for the tenant company profile.
+
+**Significantly Modified:**
+-   : To add new API routers and seed data.
+-   : To add new collections and update schemas.
+-   : Replaced with a new, simpler registration form.
+-   : To add routes for all the new pages.
+-   : To add navigation links to new pages.
+-   : To add the Create Campaign button and display full tenant contact info.
+
+**key api endpoints**
+-   : New simplified user/tenant registration.
+-   : Get the current tenant's company profile.
+-   : Update the tenant's company profile.
+-   : List campaigns for a specific tenant.
+-   : Create a new campaign for a tenant.
+-   : Update a campaign for a tenant.
+-   : Change a campaign's status.
+-   : Generates a QR code for a campaign.
+
+**Critical Info for New Agent**
+1.  **Language is French:** You must continue the conversation in French.
+2.  **Work is In-Progress:** The agent just laid the foundation for a very large feature set requested by the user. The code is new, partially tested, and needs to be completed and verified end-to-end. Do not assume anything is fully functional yet.
+3.  **Two-Tiered Priority:**
+    *   **P0 - Finish & Test Current Work:** Complete the Phase 1 features (Admin Campaign Builder, Tenant Profile, Simplified Signup, QR Code). This involves connecting all the pieces and running thorough frontend and backend tests.
+    *   **P0 - Validate Core Logic:** Before finishing, address the pending validation from user message 88 (gated exports, plan gating, etc.) and fix the plan limit display bug. These are critical for platform stability.
+4.  **User is Driving:** The user is providing very detailed, prescriptive requirements. Follow them closely. The latest set of instructions (messages 105, 108) is the current source of truth.
+
+**documents and test reports created in this job**
+- : Test report from testing agent with 100% success rate on the *previous* set of admin features, before the latest user request.
+
+**Last 10 User Messages and any pending HUMAN messages**
+-   **user (109):** Starts Phase 1 immediately. Defines plan: Simplified signup, complete company profile, Admin Campaign Builder, and relevant improvements like QR codes.
+-   **user (108):** Provides clarification on the feature request: 1. Social media tasks are optional for players. 2. QR code should be simple. 3. Social links come from the tenant's profile. 4. Tells the agent to proceed with Phase 1 and add other relevant things.
+-   **agent (107):** Asks clarifying questions about the large feature request to define the scope of Phase 1.
+-   **agent (106):** Acknowledges the massive new feature request and states they will organize and prioritize the tasks.
+-   **user (105):** Provides a very large and detailed list of new features, effectively starting a new development phase. This includes the admin campaign builder, full tenant company profiles, a new game design, player list for tenants, legal pages, and a simplified signup flow. This message interrupts the agent's ongoing validation task.
+-   **agent (104-105):** Takes a screenshot of the Audit Logs, which is the last action before being interrupted.
+-   **agent (102-103):** Takes a screenshot of the Fraud Center.
+-   **agent (100-101):** Takes a screenshot of the Admin Messages UI.
+-   **agent (98-99):** Takes a screenshot of the Tenant Exports tab.
+-   **agent (96-97):** Takes a screenshot of the Tenant Billing tab and notes that the plan limits are displayed incorrectly.
+
+**Project Health Check:**
+-   **Working:** The core MVP application (auth, dashboards, game play) and the initial Super Admin features (basic tenant list, plans, fraud, audit logs).
+-   **Broken/In-Progress:** The new features from the latest request are in an incomplete state. They have UI shells and backend routes but lack full implementation and testing. The plan limit display bug is a known issue.
+-   **Mocked:** The plan selection popup after signup has been mentioned but not implemented.
+
+**3rd Party Integrations**
+-   **Stripe:** Subscription billing.
+-   **qrcode:** (new) For generating QR codes for game links.
+
+**Testing status**
+-   Testing agent used after significant changes: YES, but this was *before* the latest batch of features was added. A new comprehensive test is required.
+-   Test files created: None.
+-   Known regressions: None.
+
+**Credentials to test flow:**
+-   **Super Admin:**
+    -   Email: 
+    -   Password: 
+-   **Test Tenant:**
+    -   Email: 
+    -   Password: 
+
+**What agent forgot to execute**
+-   The agent did not complete the mandatory test checklist from user message 88 (consent-gated export, server-side plan gating, fraud ban enforcement).
+-   The agent noted the plan limit display bug (message 97) but moved on without fixing it.
+-   The plan selection popup after the new simplified signup was planned but not implemented.</analysis>

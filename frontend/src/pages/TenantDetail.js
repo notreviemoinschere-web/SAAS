@@ -13,7 +13,7 @@ import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import { ArrowLeft, Building2, Mail, Users, Gamepad2, Play, Gift, TrendingUp, CreditCard, Download, Ban, CheckCircle2, UserCog, FileText, Trash2, Plus, ExternalLink } from "lucide-react";
+import { ArrowLeft, Building2, Mail, Users, Gamepad2, Play, Gift, TrendingUp, CreditCard, Download, Ban, CheckCircle2, UserCog, FileText, Trash2, Plus, ExternalLink, MapPin, Phone, Hash } from "lucide-react";
 
 export default function TenantDetail() {
   const { tenantId } = useParams();
@@ -194,6 +194,11 @@ export default function TenantDetail() {
               </Badge>
               <Badge variant="outline" className="capitalize">{tenant.plan}</Badge>
               
+              <Button size="sm" onClick={() => navigate(`/admin/tenants/${tenantId}/campaigns?new=1`)} data-testid="create-campaign-btn">
+                <Plus className="w-4 h-4 mr-1" />
+                Créer campagne
+              </Button>
+              
               <Button variant="outline" size="sm" onClick={handleStatusToggle} data-testid="toggle-status-btn">
                 {tenant.status === "active" ? <Ban className="w-4 h-4 mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
                 {tenant.status === "active" ? "Suspendre" : "Activer"}
@@ -305,13 +310,54 @@ export default function TenantDetail() {
               <div className="grid md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Propriétaire</CardTitle>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Building2 className="w-4 h-4" />
+                      Coordonnées Entreprise
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2 text-sm">
-                      <p><span className="text-muted-foreground">Nom:</span> {owner?.name || "N/A"}</p>
-                      <p><span className="text-muted-foreground">Email:</span> {owner?.email || "N/A"}</p>
-                      <p><span className="text-muted-foreground">Créé le:</span> {new Date(tenant.created_at).toLocaleDateString()}</p>
+                    <div className="space-y-3 text-sm">
+                      {tenant.profile?.manager_first_name && (
+                        <p className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">Gérant:</span> 
+                          {tenant.profile.manager_first_name} {tenant.profile.manager_last_name}
+                        </p>
+                      )}
+                      <p className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium">Société:</span> {tenant.name}
+                      </p>
+                      {tenant.profile?.address && (
+                        <p className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">Adresse:</span> 
+                          {tenant.profile.address}, {tenant.profile.postal_code} {tenant.profile.city}
+                        </p>
+                      )}
+                      <p className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium">Tél:</span> {tenant.profile?.phone || owner?.phone || "N/A"}
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium">Email:</span> {owner?.email || "N/A"}
+                      </p>
+                      {tenant.profile?.registration_number && (
+                        <p className="flex items-center gap-2">
+                          <Hash className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">SIRET:</span> {tenant.profile.registration_number}
+                        </p>
+                      )}
+                      {tenant.profile?.vat_number && (
+                        <p className="flex items-center gap-2">
+                          <Hash className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">TVA:</span> {tenant.profile.vat_number}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Créé le: {new Date(tenant.created_at).toLocaleDateString()}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

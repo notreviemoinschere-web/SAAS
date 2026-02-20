@@ -9,7 +9,7 @@ from datetime import datetime
 import json
 
 # Use the public backend URL for testing
-BASE_URL = "https://gamif-admin-hub.preview.emergentagent.com"
+BASE_URL = "https://wheel-fortune-12.preview.emergentagent.com"
 
 class PrizeWheelAPITester:
     def __init__(self):
