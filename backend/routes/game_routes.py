@@ -296,7 +296,7 @@ async def play_game(slug: str, req: PlayRequest, request: Request):
         'prize_id': winning_prize['id'] if winning_prize else None,
         'prize_label': winning_prize.get('label', '') if winning_prize else None,
         'reward_code': reward_code_str,
-        'reward_code_id': reward['id'] if winning_prize else None,
+        'reward_code_id': reward['id'] if winning_prize and reward_data else None,
         'email_hash': email_hash,
         'phone_hash': phone_hash,
         'ip_address': ip_address,
