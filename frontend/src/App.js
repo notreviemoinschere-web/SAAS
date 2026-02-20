@@ -42,9 +42,12 @@ function AppRoutes() {
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute roles={["super_admin"]}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/tenants/:tenantId" element={<ProtectedRoute roles={["super_admin"]}><TenantDetail /></ProtectedRoute>} />
+      <Route path="/admin/tenants/:tenantId/campaigns" element={<ProtectedRoute roles={["super_admin"]}><AdminCampaignBuilder /></ProtectedRoute>} />
+      <Route path="/admin/tenants/:tenantId/campaigns/:campaignId" element={<ProtectedRoute roles={["super_admin"]}><AdminCampaignBuilder /></ProtectedRoute>} />
 
       {/* Tenant */}
       <Route path="/dashboard" element={<ProtectedRoute roles={["tenant_owner", "tenant_staff", "super_admin"]}><TenantDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/profile" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><TenantProfile /></ProtectedRoute>} />
       <Route path="/dashboard/campaigns/new" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><CampaignEditor /></ProtectedRoute>} />
       <Route path="/dashboard/campaigns/:id" element={<ProtectedRoute roles={["tenant_owner", "super_admin"]}><CampaignEditor /></ProtectedRoute>} />
       <Route path="/dashboard/redeem" element={<ProtectedRoute roles={["tenant_owner", "tenant_staff", "super_admin"]}><StaffRedeem /></ProtectedRoute>} />
