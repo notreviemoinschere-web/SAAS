@@ -47,12 +47,30 @@ async def get_campaign_for_play(slug: str, lang: str = "en"):
     # Get tenant profile for social links and branding
     tenant_profile = await db.tenant_profiles.find_one({'tenant_id': campaign['tenant_id']}, {'_id': 0})
 
-    prizes = await db.prizes.find(
-        {'campaign_id': campaign['id']},
-        {'_id': 0, 'stock_remaining': 0, 'weight': 0}
-    ).to_list(100)
+    # Get prizes - check both embedded prizes and separate collection
+    prizes = campaign.get('prizes', [])
+    if not prizes:
+        # Fallback to separate prizes collection
+        prizes = await db.prizes.find(
+            {'campaign_id': campaign['id']},
+            {'_id': 0}
+        ).to_list(100)
+    
+    # Clean up prizes for frontend (remove sensitive data)
+    clean_prizes = []
+    for p in prizes:
+        clean_p = {
+            'id': p.get('id'),
+            'label': p.get('label', ''),
+            'display_color': p.get('display_color', p.get('color')),
+            'is_consolation': p.get('is_consolation', False)
+        }
+        # Localize
+        if lang == 'fr' and p.get('label_fr'):
+            clean_p['label'] = p['label_fr']
+        clean_prizes.append(clean_p)
 
-    # Localize
+    # Localize campaign
     title = campaign.get(f'title_{lang}') or campaign.get('title_fr') if lang == 'fr' else campaign.get('title')
     if not title:
         title = campaign.get('title', '')
@@ -60,10 +78,6 @@ async def get_campaign_for_play(slug: str, lang: str = "en"):
     description = campaign.get(f'description_{lang}') or campaign.get('description_fr') if lang == 'fr' else campaign.get('description')
     if not description:
         description = campaign.get('description', '')
-
-    for p in prizes:
-        if lang == 'fr' and p.get('label_fr'):
-            p['label'] = p['label_fr']
 
     # Build tenant profile response
     profile_data = {}
