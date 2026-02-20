@@ -183,10 +183,8 @@ async def login(req: LoginRequest):
     if not user or not verify_password(req.password, user['password_hash']):
         raise HTTPException(401, 'Invalid email or password')
 
-    if user.get('role') != 'super_admin' and not user.get('email_verified'):
-        raise HTTPException(403, 'Please verify your email first')
-
     # Check tenant status
+    tenant = None
     if user.get('tenant_id'):
         tenant = await db.tenants.find_one({'id': user['tenant_id']}, {'_id': 0})
         if tenant and tenant.get('status') == 'suspended':
@@ -200,10 +198,13 @@ async def login(req: LoginRequest):
             'id': user['id'],
             'email': user['email'],
             'name': user.get('name', ''),
+            'first_name': user.get('first_name', ''),
+            'last_name': user.get('last_name', ''),
             'role': user['role'],
             'tenant_id': user.get('tenant_id'),
-            'email_verified': user.get('email_verified', False)
-        }
+            'email_verified': user.get('email_verified', True)
+        },
+        'tenant': tenant
     }
 
 
