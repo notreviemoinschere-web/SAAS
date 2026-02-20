@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: prizewheelpro-api
+    env: python
+    plan: starter
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /docs
+    envVars:
+      - key: MONGO_URL
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SUPER_ADMIN_EMAIL
+        value: admin@prizewheelpro.com
+      - key: SUPER_ADMIN_PASSWORD
+        sync: false
+      - key: DEMO_TENANT_EMAIL
+        value: test@example.com
+      - key: DEMO_TENANT_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"
