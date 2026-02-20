@@ -254,8 +254,12 @@ async def play_game(slug: str, req: PlayRequest, request: Request):
     })
 
     # Server-side weighted draw
-    prizes = await db.prizes.find({'campaign_id': campaign_id}, {'_id': 0}).to_list(100)
-    all_prizes_for_index = await db.prizes.find({'campaign_id': campaign_id}, {'_id': 0}).to_list(100)
+    # Get prizes - check both embedded prizes and separate collection
+    prizes = campaign.get('prizes', [])
+    if not prizes:
+        prizes = await db.prizes.find({'campaign_id': campaign_id}, {'_id': 0}).to_list(100)
+    
+    all_prizes_for_index = prizes.copy()
 
     winning_prize = weighted_draw(prizes)
 
