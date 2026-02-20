@@ -18,9 +18,12 @@ MAX_PLAYS_PER_IDENTIFIER = 2
 class PlayRequest(BaseModel):
     email: str
     phone: Optional[str] = None
+    first_name: Optional[str] = None
     consent_accepted: bool = True
+    marketing_consent: bool = False
     device_hash: Optional[str] = None
     lang: Optional[str] = "en"
+    tasks_completed: Optional[dict] = None
 
 
 class ConsentRecord(BaseModel):
