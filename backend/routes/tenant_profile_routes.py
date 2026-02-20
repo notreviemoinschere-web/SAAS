@@ -200,7 +200,7 @@ async def get_campaign_qrcode(
     tenant = await db.tenants.find_one({'id': user['tenant_id']})
     
     # Build the game URL
-    base_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://gamif-admin-hub.preview.emergentagent.com')
+    base_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://wheel-fortune-12.preview.emergentagent.com')
     game_url = f"{base_url}/play/{campaign['slug']}"
     
     # Generate QR code

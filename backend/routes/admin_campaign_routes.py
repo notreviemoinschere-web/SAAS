@@ -490,7 +490,7 @@ async def generate_test_link(
     )
     
     import os
-    base_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://gamif-admin-hub.preview.emergentagent.com')
+    base_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://wheel-fortune-12.preview.emergentagent.com')
     test_url = f"{base_url}/play/{campaign['slug']}?mode=test&token={test_token}"
     
     return {
