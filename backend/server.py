@@ -20,6 +20,7 @@ from routes.admin_extended_routes import router as admin_extended_router
 from routes.admin_campaign_routes import router as admin_campaign_router
 from routes.tenant_routes import router as tenant_router
 from routes.tenant_profile_routes import router as tenant_profile_router
+from routes.tenant_analytics_routes import router as tenant_analytics_router
 from routes.game_routes import router as game_router
 from routes.billing_routes import router as billing_router
 
@@ -32,6 +33,7 @@ app.include_router(admin_extended_router)
 app.include_router(admin_campaign_router)
 app.include_router(tenant_router)
 app.include_router(tenant_profile_router)
+app.include_router(tenant_analytics_router)
 app.include_router(game_router)
 app.include_router(billing_router)
 
