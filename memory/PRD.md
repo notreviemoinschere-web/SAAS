@@ -4,186 +4,142 @@
 Build a production-ready multi-tenant SaaS gamification platform allowing businesses (restaurants, bars, hotels, retail, events) to create promotional games (wheel of fortune) to collect leads and distribute rewards.
 
 ## Architecture
-- **Frontend**: React + Tailwind CSS + Shadcn UI
+- **Frontend**: React + Tailwind CSS + Shadcn UI + Recharts
 - **Backend**: FastAPI (Python) with modular router architecture
 - **Database**: MongoDB (single DB, tenant_id isolation)
 - **Payments**: Stripe (test mode) via emergentintegrations
 - **Auth**: JWT with bcrypt password hashing
 - **i18n**: Hardcoded JSON (EN/FR)
-- **Encryption**: Fernet symmetric encryption for sensitive data (Stripe keys)
-- **QR Codes**: qrcode library for game URL generation
-
-## User Personas
-1. **Super Admin**: Full system access, manage tenants/plans/billing/messaging/fraud/campaigns
-2. **Tenant Owner**: Business owner managing campaigns, prizes, staff, billing, company profile
-3. **Tenant Staff**: Code redemption only
-4. **Player**: Public user playing promotional games
-
-## Core Requirements (Static)
-- Multi-tenant architecture with strict tenant_id filtering
-- RBAC: super_admin, tenant_owner, tenant_staff, player
-- Deterministic server-side game engine (weighted random draw)
-- Campaign lifecycle: Draft -> Test -> Active -> Paused -> Ended
-- Fraud protection: max 2 plays per email_hash/phone_hash per campaign + IP/device/identity banning
-- Consent registry: type, timestamp, IP, legal text version
-- Cookie compliance: Accept/Reject/Manage with category-based consent
-- Stripe subscription billing (Free/Pro/Business plans)
-- Multi-language (EN/FR) with browser detection + manual toggle
-- Audit logging for all sensitive actions
+- **Encryption**: Fernet symmetric encryption for sensitive data
+- **QR Codes**: qrcode library
+- **Animations**: canvas-confetti
 
 ## What's Been Implemented
 
-### Phase 1 - Core MVP (Feb 17, 2026)
+### Phase 1 - Core MVP (Feb 17, 2026) ✅
 - [x] JWT auth with email verification and password reset
-- [x] Multi-tenant data isolation (tenant_id on all queries)
+- [x] Multi-tenant data isolation
 - [x] Campaign CRUD with status workflow
 - [x] Prize management with weighted draw engine
 - [x] Server-side deterministic game engine
-- [x] Fraud protection (max 2 plays per email/phone hash)
+- [x] Fraud protection
 - [x] Staff code redemption
 - [x] Stripe checkout integration
-- [x] Consent registry (game terms + cookies)
+- [x] Consent registry
 - [x] Audit logging
 
-### Phase 2 - Super Admin Panel (Feb 17, 2026)
+### Phase 2 - Super Admin Panel (Feb 17, 2026) ✅
 - [x] Plans CRUD API with limits
 - [x] Stripe Configuration with encrypted keys
-- [x] Enhanced Tenant Management with filters
-- [x] Tenant Detail API with stats
-- [x] Admin Messaging (broadcast + targeted)
-- [x] Enhanced Audit Logs with category/action filtering
-- [x] Fraud Center with ban management (IP, device, identity)
-- [x] Server-side Ban Enforcement
-- [x] Consent-gated Exports (CSV with PII masking)
-- [x] Tenant Notes and Impersonation
+- [x] Enhanced Tenant Management
+- [x] Admin Messaging
+- [x] Fraud Center with ban management
+- [x] Consent-gated Exports
 - [x] Plan Change Override
 
-### Phase 3 - Enhanced Features (Feb 20, 2026) ✅ COMPLETED
-- [x] **Simplified Signup Flow**: 2-step registration (Step 1: name, company, phone / Step 2: email, password, GDPR)
-- [x] **Plan Selection Popup**: Appears after signup with Free/Pro/Business options
-- [x] **Complete Tenant Profile (Mon Entreprise)**: 
-  - Informations tab: Manager name, Company, Address, Phone, Email, SIRET, TVA, Google Review URL
-  - Réseaux Sociaux tab: Add/remove social media links
-  - Apparence tab: Logo upload, Primary/Secondary colors
-- [x] **Admin Campaign Builder (Done-for-You)**:
-  - 4-step wizard: Basics, Player Requirements, Prizes, Legal & Display
-  - Status management: draft -> test -> active -> paused -> ended
-  - Test link generation with token
-  - Campaign duplication and deletion
-  - Audit logging for all admin actions
-- [x] **QR Code Generation**: Base64 PNG with game URL for each campaign
+### Phase 3 - Enhanced Features (Feb 20, 2026) ✅
+- [x] Simplified Signup Flow (2 steps + plan popup)
+- [x] Complete Tenant Profile (Mon Entreprise)
+- [x] Admin Campaign Builder (Done-for-You)
+- [x] QR Code Generation
+
+### Phase 4 - 2026 Design & Analytics (Feb 20, 2026) ✅ NEW
+- [x] **Redesigned Wheel of Fortune 2026**:
+  - Canvas-based rendering with LED lights ring
+  - Neon color gradients with 3D effects
+  - Gold premium pointer with metallic shine
+  - Pulse animation in idle state
+  - 5-second spin animation with ease-out
+  - Confetti celebration on win
+- [x] **Enhanced Player Flow**:
+  - Mandatory GDPR consent phase with terms
+  - Optional marketing consent checkbox
+  - Optional pre-play social tasks (Instagram, Facebook, TikTok)
+  - Glass-morphism dark design
+  - Prize copy code button with feedback
+  - Share victory button (Web Share API)
+  - Google Review link after game
+- [x] **Tenant Player List** (`/dashboard/players`):
+  - Player table with email, phone, name, campaign, date, prize, consent
+  - Filter by campaign, consent, search, dates
+  - Stats cards (total, with email, with phone, marketing consent)
+  - CSV export (Pro plan only)
+- [x] **Tenant Analytics Dashboard** (`/dashboard/analytics`):
+  - KPI cards: plays, wins, unique players, conversion rate
+  - Area chart: plays & wins over time
+  - Pie chart: prize distribution
+  - Bar chart: hourly distribution
+  - Top campaigns ranking
+  - Code redemption stats
+  - Period filter (7d, 30d, 90d, 365d)
+  - Campaign filter
 
 ## Credentials
 - Super Admin: admin@prizewheelpro.com / Admin123!
 - Test Tenant: test@example.com / Test123!
-- Active Campaign: /play/summer-spin
+- Test Campaign: /play/admin-test-campaign
 
 ## Plan Limits
-- **Free**: 1 campaign, 500 plays/month, 0 staff, no export
-- **Pro**: Unlimited campaigns, 10,000 plays/month, 5 staff, export, branding removal
-- **Business**: Everything unlimited, API access, white label, multi-location
+- **Free**: 1 campaign, 500 plays/month, no export
+- **Pro**: Unlimited campaigns, 10,000 plays/month, export enabled
+- **Business**: Everything unlimited, API access
+
+## Database Collections
+- `users`, `tenants`, `tenant_profiles`, `campaigns`, `prizes`, `plays`
+- `players`, `reward_codes`, `consents`, `audit_logs`
+- `plans`, `platform_settings`, `admin_messages`, `tenant_notes`
+- `banned_ips`, `banned_devices`, `blacklisted_identities`, `fraud_flags`
+
+## Key API Endpoints
+
+### Game (Public)
+- `GET /api/game/{slug}` - Get campaign with prizes and tenant_profile
+- `POST /api/game/{slug}/play` - Play the wheel (supports embedded prizes)
+
+### Tenant Analytics
+- `GET /api/tenant/players` - List players with filters and pagination
+- `GET /api/tenant/players/export` - Export CSV (Pro plan)
+- `GET /api/tenant/analytics` - Dashboard KPIs and charts
 
 ## Prioritized Backlog
 
 ### P0 (Critical for Production)
-- [ ] Real email sending for verification/reset (SendGrid/Resend)
+- [ ] Real email sending for verification/reset
 - [ ] Stripe live mode configuration
 - [ ] 2FA for Super Admin
 - [ ] HTTPS enforcement
 
-### P1 (Important Features) - USER REQUESTED
-- [ ] **Game Wheel Redesign**: "Perfect and pro, worthy of 2026" with beautiful animations
-- [ ] **Enhanced Player Flow**: 
-  - Mandatory GDPR consent before play
-  - Optional pre-play tasks (follow social media)
-  - Copy code button for winners
-  - Optional Google Review link after game
-- [ ] **Tenant Player List**: View player contact info for remarketing
-
-### P2 (Nice to Have) - USER REQUESTED
+### P1 (Next Sprint)
 - [ ] **Legal Pages**: Mentions légales, Cookies, Politique de confidentialité, CGV
-- [ ] Enhanced Invoicing with company details
 
-### P3 (Future)
-- [ ] Advanced analytics with charts
+### P2 (Future)
+- [ ] Advanced analytics with more charts
 - [ ] Multi-location support
 - [ ] Webhook integration
 - [ ] Custom domain support
-- [ ] Async export jobs
 - [ ] OTP verification
 
-## Database Collections
-
-### Core
-- `users`: id, email, password_hash, role, tenant_id, first_name, last_name, phone
-- `tenants`: id, name, slug, owner_id, status, plan, profile (business details), branding
-- `campaigns`: id, tenant_id, title, slug, status, prizes[], settings, created_by_admin
-- `plays`: id, campaign_id, tenant_id, player_id, prize_id, is_test
-- `players`: id, campaign_id, tenant_id, email, phone, email_hash, phone_hash
-- `reward_codes`: id, campaign_id, tenant_id, code, status, expires_at
-- `consents`: id, player_id, consent_type, ip_address, legal_text_version
-
-### Admin
-- `plans`: id, name, price_monthly, price_yearly, limits, features, is_active
-- `platform_settings`: setting_type, mode, encrypted keys
-- `admin_messages`: id, title, content, message_type, target_type
-- `tenant_notes`: id, tenant_id, content, created_by
-- `banned_ips`, `banned_devices`, `blacklisted_identities`
-- `audit_logs`: id, tenant_id, user_id, action, category, details
-
-## Key API Endpoints
-
-### Auth
-- `POST /api/auth/signup` - Simplified tenant/user creation with profile
-- `POST /api/auth/login` - Authenticate
-- `GET /api/auth/me` - Current user
-
-### Tenant Profile
-- `GET /api/tenant/profile` - Get company profile and branding
-- `PUT /api/tenant/profile` - Update business details and social links
-- `PUT /api/tenant/branding` - Update colors
-- `POST /api/tenant/logo` - Upload logo
-- `GET /api/tenant/campaigns/:id/qrcode` - Generate QR code
-
-### Admin Campaigns
-- `GET /api/admin/tenants/:id/campaigns` - List campaigns
-- `POST /api/admin/tenants/:id/campaigns` - Create (Done-for-You)
-- `PATCH /api/admin/tenants/:id/campaigns/:cid` - Update
-- `POST /api/admin/tenants/:id/campaigns/:cid/status` - Change status
-- `POST /api/admin/tenants/:id/campaigns/:cid/test-link` - Generate test URL
-- `POST /api/admin/tenants/:id/campaigns/:cid/duplicate` - Copy
-- `DELETE /api/admin/tenants/:id/campaigns/:cid` - Delete
-
-## Testing
-- Test reports: `/app/test_reports/iteration_3.json`
-- Backend: 85% passing
-- Frontend: 100% UI flows working
-- All Phase 3 features verified working
+## Testing Status
+- Test reports: `/app/test_reports/iteration_4.json`
+- Backend: 94% passing
+- Frontend: 100% passing
+- All P1-P4 features verified working
 
 ## File Structure
 ```
 /app/
 ├── backend/
-│   ├── routes/
-│   │   ├── auth_routes.py        # Simplified signup
-│   │   ├── tenant_profile_routes.py  # Mon Entreprise + QR
-│   │   ├── admin_campaign_routes.py  # Done-for-You builder
-│   │   ├── admin_routes.py
-│   │   ├── admin_extended_routes.py
-│   │   ├── tenant_routes.py
-│   │   ├── game_routes.py
-│   │   └── billing_routes.py
-│   ├── server.py
-│   ├── database.py
-│   └── auth.py
+│   └── routes/
+│       ├── tenant_analytics_routes.py  # NEW - Players & Analytics
+│       ├── admin_campaign_routes.py
+│       ├── tenant_profile_routes.py
+│       └── game_routes.py  # UPDATED - embedded prizes
 └── frontend/
     └── src/
-        ├── pages/
-        │   ├── Signup.js             # 2-step + plan popup
-        │   ├── TenantProfile.js      # Mon Entreprise (3 tabs)
-        │   ├── AdminCampaignBuilder.js  # 4-step wizard
-        │   ├── TenantDashboard.js
-        │   └── TenantDetail.js
-        └── components/
-            └── Sidebar.js
+        ├── components/
+        │   └── WheelOfFortune2026.js  # NEW - 2026 design
+        └── pages/
+            ├── PlayGame2026.js     # NEW - GDPR flow, results
+            ├── TenantPlayers.js    # NEW - Player list
+            └── TenantAnalytics.js  # NEW - Analytics dashboard
 ```
