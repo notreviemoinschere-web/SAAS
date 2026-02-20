@@ -13,7 +13,7 @@ import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import { ArrowLeft, Building2, Mail, Users, Gamepad2, Play, Gift, TrendingUp, CreditCard, Download, Ban, CheckCircle2, UserCog, FileText, Trash2, Plus, ExternalLink } from "lucide-react";
+import { ArrowLeft, Building2, Mail, Users, Gamepad2, Play, Gift, TrendingUp, CreditCard, Download, Ban, CheckCircle2, UserCog, FileText, Trash2, Plus, ExternalLink, MapPin, Phone, Hash } from "lucide-react";
 
 export default function TenantDetail() {
   const { tenantId } = useParams();
