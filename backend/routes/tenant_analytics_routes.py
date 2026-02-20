@@ -366,7 +366,7 @@ async def get_analytics(
             "wins": {"$sum": {"$cond": [{"$gt": ["$prize_id", None]}, 1, 0]}}
         }},
         {"$lookup": {
-            "from": "games",
+            "from": "campaigns",
             "localField": "_id",
             "foreignField": "id",
             "as": "campaign"
@@ -383,15 +383,24 @@ async def get_analytics(
     ]
     top_campaigns = await db.plays.aggregate(top_campaigns_pipeline).to_list(None)
 
-    # Recent activity
+    # Recent activity - handle both played_at and created_at
     recent_pipeline = [
         {"$match": {"tenant_id": tenant_id}},
-        {"$sort": {"played_at": -1}},
+        {"$addFields": {
+            "sort_date": {"$ifNull": ["$played_at", "$created_at"]}
+        }},
+        {"$sort": {"sort_date": -1}},
         {"$limit": 10},
+        {"$lookup": {
+            "from": "players",
+            "localField": "player_id",
+            "foreignField": "id",
+            "as": "player"
+        }},
         {"$project": {
             "_id": 0,
-            "email": 1,
-            "played_at": 1,
+            "email": {"$ifNull": ["$email", {"$arrayElemAt": ["$player.email", 0]}]},
+            "played_at": {"$ifNull": ["$played_at", "$created_at"]},
             "won": {"$gt": ["$prize_id", None]}
         }}
     ]
