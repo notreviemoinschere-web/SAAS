@@ -194,6 +194,11 @@ export default function TenantDetail() {
               </Badge>
               <Badge variant="outline" className="capitalize">{tenant.plan}</Badge>
               
+              <Button size="sm" onClick={() => navigate(`/admin/tenants/${tenantId}/campaigns?new=1`)} data-testid="create-campaign-btn">
+                <Plus className="w-4 h-4 mr-1" />
+                Créer campagne
+              </Button>
+              
               <Button variant="outline" size="sm" onClick={handleStatusToggle} data-testid="toggle-status-btn">
                 {tenant.status === "active" ? <Ban className="w-4 h-4 mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
                 {tenant.status === "active" ? "Suspendre" : "Activer"}
