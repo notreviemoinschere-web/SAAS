@@ -15,9 +15,21 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 class SignupRequest(BaseModel):
-    business_name: str
+    # Basic info
+    first_name: str
+    last_name: str
+    company_name: str
+    phone: str
     email: str
     password: str
+    gdpr_consent: bool = True
+    # Optional fields that can be filled later
+    address: str = ""
+    city: str = ""
+    postal_code: str = ""
+    country: str = "France"
+    registration_number: str = ""  # SIRET/SIREN
+    vat_number: str = ""
 
 
 class LoginRequest(BaseModel):
