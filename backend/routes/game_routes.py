@@ -109,7 +109,7 @@ async def get_campaign_for_play(slug: str, lang: str = "en"):
             'start_date': campaign.get('start_date'),
             'end_date': campaign.get('end_date')
         },
-        'prizes': prizes,
+        'prizes': clean_prizes,
         'tenant': {
             'name': tenant.get('name', '') if tenant else '',
             'branding': tenant.get('branding', {}) if tenant else {}
