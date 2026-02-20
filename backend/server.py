@@ -280,7 +280,7 @@ async def get_translations(lang: str):
 
 
 # Stripe webhook endpoint (must be at app level, not router)
-@api.post("/api/webhook/stripe")
+@app.post("/api/webhook/stripe")  # ✅ Fixed: was @api.post (NameError)
 async def stripe_webhook(request: Request):
     stripe_key = os.environ.get("STRIPE_API_KEY")
     if not stripe_key:
@@ -302,10 +302,6 @@ async def stripe_webhook(request: Request):
             sig_header=sig_header,
             secret=webhook_secret,
         )
-
-        # ===============================
-        # HANDLE EVENTS
-        # ===============================
 
         if event["type"] == "checkout.session.completed":
             session = event["data"]["object"]
@@ -337,7 +333,9 @@ async def stripe_webhook(request: Request):
 
     except Exception as e:
         logger.exception("Stripe webhook error")
+        from fastapi import HTTPException
         raise HTTPException(status_code=400, detail=str(e))
+
         
 # Cookie consent endpoint
 @app.post("/api/cookie-consent")
