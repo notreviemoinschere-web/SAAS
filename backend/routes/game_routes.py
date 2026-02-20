@@ -286,16 +286,25 @@ async def play_game(slug: str, req: PlayRequest, request: Request):
     # Record play
     play = {
         'id': str(uuid.uuid4()),
+        'play_id': str(uuid.uuid4()),
         'campaign_id': campaign_id,
         'tenant_id': tenant_id,
         'player_id': player['id'],
+        'email': req.email,
+        'phone': req.phone,
+        'first_name': req.first_name,
         'prize_id': winning_prize['id'] if winning_prize else None,
+        'prize_label': winning_prize.get('label', '') if winning_prize else None,
         'reward_code': reward_code_str,
+        'reward_code_id': reward['id'] if winning_prize else None,
         'email_hash': email_hash,
         'phone_hash': phone_hash,
         'ip_address': ip_address,
         'device_hash': req.device_hash,
+        'marketing_consent': req.marketing_consent,
+        'tasks_completed': req.tasks_completed,
         'is_test': is_test,
+        'played_at': datetime.now(timezone.utc),
         'created_at': datetime.now(timezone.utc).isoformat()
     }
     await db.plays.insert_one(play)
