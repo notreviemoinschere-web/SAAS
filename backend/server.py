@@ -280,61 +280,49 @@ async def get_translations(lang: str):
 
 
 # Stripe webhook endpoint (must be at app level, not router)
-@app.post("/api/webhook/stripe")
-async def stripe_webhook(request: Request):
-    body = await request.body()
-    stripe_signature = request.headers.get("Stripe-Signature")
-
-    stripe_key = os.environ.get('STRIPE_API_KEY')
-    if not stripe_key:
-        return {"status": "ok"}
-
-    try:
-        import stripe
-
 @api.post("/api/webhook/stripe")
 async def stripe_webhook(request: Request):
     stripe_key = os.environ.get("STRIPE_API_KEY")
     if not stripe_key:
-        return {"status": "ok"}
-
-    stripe.api_key = stripe_key
-
-    payload = await request.body()
-    sig_header = request.headers.get("Stripe-Signature")
-
-    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
-
-    if not webhook_secret:
-        # Pas configuré → ne bloque pas le serveur
-        return {"status": "ok"}
+        return {"status": "ok"}  # Stripe not configured, ignore
 
     try:
+        import stripe
+        stripe.api_key = stripe_key
+
+        body = await request.body()
+        sig_header = request.headers.get("Stripe-Signature")
+        webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+
+        if not webhook_secret or not sig_header:
+            return {"status": "ignored"}
+
         event = stripe.Webhook.construct_event(
-            payload=payload,
+            payload=body,
             sig_header=sig_header,
-            secret=webhook_secret
+            secret=webhook_secret,
         )
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid webhook signature")
 
-    # Exemple : checkout terminé
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-        session_id = session.get("id")
-        metadata = session.get("metadata", {})
+        # ===============================
+        # HANDLE EVENTS
+        # ===============================
 
-        tenant_id = metadata.get("tenant_id")
-        plan = metadata.get("plan", "free")
+        if event["type"] == "checkout.session.completed":
+            session = event["data"]["object"]
+            session_id = session.get("id")
+            metadata = session.get("metadata", {})
 
-        if session_id:
-            await db.payment_transactions.update_one(
-                {"session_id": session_id},
-                {"$set": {
-                    "payment_status": "paid",
-                    "updated_at": datetime.now(timezone.utc).isoformat()
-                }}
-            )
+            tenant_id = metadata.get("tenant_id")
+            plan = metadata.get("plan", "free")
+
+            if session_id:
+                await db.payment_transactions.update_one(
+                    {"session_id": session_id},
+                    {"$set": {
+                        "payment_status": "paid",
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
 
             if tenant_id:
                 await db.tenants.update_one(
@@ -345,7 +333,12 @@ async def stripe_webhook(request: Request):
                     }}
                 )
 
-    return {"status": "ok"}
+        return {"status": "success"}
+
+    except Exception as e:
+        logger.exception("Stripe webhook error")
+        raise HTTPException(status_code=400, detail=str(e))
+        
 # Cookie consent endpoint
 @app.post("/api/cookie-consent")
 async def record_cookie_consent(request: Request):
