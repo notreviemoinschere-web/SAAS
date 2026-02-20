@@ -57,9 +57,23 @@ def create_slug(name: str) -> str:
 
 @router.post("/signup")
 async def signup(req: SignupRequest, request: Request):
+    # Validate required fields
+    if not req.first_name or not req.first_name.strip():
+        raise HTTPException(400, 'Le prénom est requis')
+    if not req.last_name or not req.last_name.strip():
+        raise HTTPException(400, 'Le nom est requis')
+    if not req.company_name or not req.company_name.strip():
+        raise HTTPException(400, "Le nom de l'entreprise est requis")
+    if not req.phone or not req.phone.strip():
+        raise HTTPException(400, 'Le téléphone est requis')
+    if not req.email or not req.email.strip():
+        raise HTTPException(400, "L'email est requis")
+    if not req.password or len(req.password) < 6:
+        raise HTTPException(400, 'Le mot de passe doit faire au moins 6 caractères')
+    
     # Validate GDPR consent
     if not req.gdpr_consent:
-        raise HTTPException(400, 'GDPR consent is required')
+        raise HTTPException(400, 'Le consentement RGPD est requis')
     
     existing = await db.users.find_one({'email': req.email.lower()})
     if existing:
