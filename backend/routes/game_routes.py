@@ -43,6 +43,9 @@ async def get_campaign_for_play(slug: str, lang: str = "en"):
         raise HTTPException(404, 'Campaign not found or not active')
 
     tenant = await db.tenants.find_one({'id': campaign['tenant_id']}, {'_id': 0})
+    
+    # Get tenant profile for social links and branding
+    tenant_profile = await db.tenant_profiles.find_one({'tenant_id': campaign['tenant_id']}, {'_id': 0})
 
     prizes = await db.prizes.find(
         {'campaign_id': campaign['id']},
@@ -62,6 +65,17 @@ async def get_campaign_for_play(slug: str, lang: str = "en"):
         if lang == 'fr' and p.get('label_fr'):
             p['label'] = p['label_fr']
 
+    # Build tenant profile response
+    profile_data = {}
+    if tenant_profile:
+        profile_data = {
+            'social_links': tenant_profile.get('social_links', {}),
+            'primary_color': tenant_profile.get('branding', {}).get('primary_color', '#6366f1'),
+            'secondary_color': tenant_profile.get('branding', {}).get('secondary_color', '#8b5cf6'),
+            'logo_url': tenant_profile.get('branding', {}).get('logo_url'),
+            'google_review_url': tenant_profile.get('google_review_url')
+        }
+
     return {
         'campaign': {
             'id': campaign['id'],
@@ -70,7 +84,14 @@ async def get_campaign_for_play(slug: str, lang: str = "en"):
             'slug': campaign['slug'],
             'status': campaign['status'],
             'legal_text': campaign.get(f'legal_text_{lang}') or campaign.get('legal_text', ''),
+            'terms_text': campaign.get('terms_text', ''),
             'rules': campaign.get(f'rules_{lang}') or campaign.get('rules', ''),
+            'intro_text': campaign.get('intro_text', ''),
+            'cta_text': campaign.get('cta_text', ''),
+            'require_phone': campaign.get('require_phone', False),
+            'require_social_follow': campaign.get('require_social_follow', False),
+            'consent_marketing_email': campaign.get('consent_marketing_email', False),
+            'show_google_review': campaign.get('show_google_review', False),
             'start_date': campaign.get('start_date'),
             'end_date': campaign.get('end_date')
         },
@@ -78,7 +99,8 @@ async def get_campaign_for_play(slug: str, lang: str = "en"):
         'tenant': {
             'name': tenant.get('name', '') if tenant else '',
             'branding': tenant.get('branding', {}) if tenant else {}
-        }
+        },
+        'tenant_profile': profile_data
     }
 
 
