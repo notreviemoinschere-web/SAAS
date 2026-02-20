@@ -14,8 +14,10 @@ import TenantDetail from "@/pages/TenantDetail";
 import AdminCampaignBuilder from "@/pages/AdminCampaignBuilder";
 import TenantDashboard from "@/pages/TenantDashboard";
 import TenantProfile from "@/pages/TenantProfile";
+import TenantPlayers from "@/pages/TenantPlayers";
+import TenantAnalytics from "@/pages/TenantAnalytics";
 import CampaignEditor from "@/pages/CampaignEditor";
-import PlayGame from "@/pages/PlayGame";
+import PlayGame2026 from "@/pages/PlayGame2026";
 import StaffRedeem from "@/pages/StaffRedeem";
 import Billing from "@/pages/Billing";
 
